@@ -1,0 +1,53 @@
+diff -Naurp WALinuxAgent-2.3.0.2/azurelinuxagent/common/osutil/factory.py WALinuxAgent-2.3.0.2-new/azurelinuxagent/common/osutil/factory.py
+--- WALinuxAgent-2.3.0.2/azurelinuxagent/common/osutil/factory.py	2021-06-11 12:20:57.000000000 -0700
++++ WALinuxAgent-2.3.0.2-new/azurelinuxagent/common/osutil/factory.py	2021-12-10 23:00:20.730766829 -0700
+@@ -98,7 +98,7 @@ def _get_osutil(distro_name, distro_code
+ 
+         return DebianOSBaseUtil()
+ 
+-    if distro_name in ("redhat", "rhel", "centos", "oracle"):
++    if distro_name in ("redhat", "rhel", "centos", "oracle", "openela"):
+         if Version(distro_version) < Version("7"):
+             return Redhat6xOSUtil()
+ 
+diff -Naurp WALinuxAgent-2.3.0.2/azurelinuxagent/pa/rdma/factory.py WALinuxAgent-2.3.0.2-new/azurelinuxagent/pa/rdma/factory.py
+--- WALinuxAgent-2.3.0.2/azurelinuxagent/pa/rdma/factory.py	2021-06-11 12:20:57.000000000 -0700
++++ WALinuxAgent-2.3.0.2-new/azurelinuxagent/pa/rdma/factory.py	2021-12-10 23:01:16.424464978 -0700
+@@ -38,7 +38,7 @@ def get_rdma_handler(
+     ):
+         return SUSERDMAHandler()
+ 
+-    if distro_full_name == 'CentOS Linux' or distro_full_name == 'CentOS' or distro_full_name == 'Red Hat Enterprise Linux Server':
++    if distro_full_name in ('CentOS Linux', 'CentOS', 'Red Hat Enterprise Linux Server', 'OpenELA'):
+         return CentOSRDMAHandler(distro_version)
+ 
+     if distro_full_name == 'Ubuntu':
+diff -Naurp WALinuxAgent-2.3.0.2/setup.py WALinuxAgent-2.3.0.2-new/setup.py
+--- WALinuxAgent-2.3.0.2/setup.py	2021-06-11 12:20:57.000000000 -0700
++++ WALinuxAgent-2.3.0.2-new/setup.py	2021-12-10 23:02:07.945110815 -0700
+@@ -97,7 +97,7 @@ def get_data_files(name, version, fullna
+     agent_bin_path = osutil.get_agent_bin_path()
+ 
+     set_bin_files(data_files, dest=agent_bin_path)
+-    if name == 'redhat' or name == 'centos':  # pylint: disable=R1714
++    if name in ('redhat', 'centos', 'openela'):  # pylint: disable=R1714
+         set_conf_files(data_files)
+         set_logrotate_files(data_files)
+         set_udev_files(data_files)
+diff -Naurp WALinuxAgent-2.3.0.2/tests/common/osutil/test_factory.py WALinuxAgent-2.3.0.2-new/tests/common/osutil/test_factory.py
+--- WALinuxAgent-2.3.0.2/tests/common/osutil/test_factory.py	2021-06-11 12:20:57.000000000 -0700
++++ WALinuxAgent-2.3.0.2-new/tests/common/osutil/test_factory.py	2021-12-10 23:02:44.689571426 -0700
+@@ -237,6 +237,13 @@ class TestOsUtilFactory(AgentTestCase):
+         self.assertTrue(isinstance(ret, RedhatOSUtil))
+         self.assertEqual(ret.get_service_name(), "waagent")
+ 
++        ret = _get_osutil(distro_name="openela",
++                          distro_code_name="",
++                          distro_full_name="",
++                          distro_version="8")
++        self.assertTrue(isinstance(ret, RedhatOSUtil))
++        self.assertEqual(ret.get_service_name(), "waagent")
++
+     def test_get_osutil_it_should_return_euleros(self):
+         ret = _get_osutil(distro_name="euleros",
+                           distro_code_name="",

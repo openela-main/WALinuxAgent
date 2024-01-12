@@ -1,0 +1,72 @@
+From 2bad20926567eb407f9c5bbfb4593493412688e6 Mon Sep 17 00:00:00 2001
+From: Louis Abel <label@rockylinux.org>
+Date: Sat, 1 Oct 2022 22:57:18 -0700
+Subject: [PATCH] Rebase patch for 2.7.x
+
+---
+ azurelinuxagent/common/osutil/factory.py | 2 +-
+ azurelinuxagent/pa/rdma/factory.py       | 2 +-
+ setup.py                                 | 2 +-
+ tests/common/osutil/test_factory.py      | 7 +++++++
+ 4 files changed, 10 insertions(+), 3 deletions(-)
+
+diff --git a/azurelinuxagent/common/osutil/factory.py b/azurelinuxagent/common/osutil/factory.py
+index b8f4291..72f6ef8 100644
+--- a/azurelinuxagent/common/osutil/factory.py
++++ b/azurelinuxagent/common/osutil/factory.py
+@@ -102,7 +102,7 @@ def _get_osutil(distro_name, distro_code_name, distro_version, distro_full_name)
+ 
+         return DebianOSBaseUtil()
+ 
+-    if distro_name in ("redhat", "rhel", "centos", "oracle", "almalinux", "cloudlinux"):
++    if distro_name in ("redhat", "rhel", "centos", "oracle", "almalinux", "cloudlinux", "openela"):
+         if Version(distro_version) < Version("7"):
+             return Redhat6xOSUtil()
+ 
+diff --git a/azurelinuxagent/pa/rdma/factory.py b/azurelinuxagent/pa/rdma/factory.py
+index 8fb5066..680967e 100644
+--- a/azurelinuxagent/pa/rdma/factory.py
++++ b/azurelinuxagent/pa/rdma/factory.py
+@@ -38,7 +38,7 @@ def get_rdma_handler(
+     ):
+         return SUSERDMAHandler()
+ 
+-    if distro_full_name in ('CentOS Linux', 'CentOS', 'Red Hat Enterprise Linux Server', 'AlmaLinux', 'CloudLinux'):
++    if distro_full_name in ('CentOS Linux', 'CentOS', 'Red Hat Enterprise Linux Server', 'AlmaLinux', 'CloudLinux', 'OpenELA'):
+         return CentOSRDMAHandler(distro_version)
+ 
+     if distro_full_name == 'Ubuntu':
+diff --git a/setup.py b/setup.py
+index 586bb5c..1377d16 100755
+--- a/setup.py
++++ b/setup.py
+@@ -96,7 +96,7 @@ def get_data_files(name, version, fullname):  # pylint: disable=R0912
+     systemd_dir_path = osutil.get_systemd_unit_file_install_path()
+     agent_bin_path = osutil.get_agent_bin_path()
+ 
+-    if name in ('redhat', 'centos', 'almalinux', 'cloudlinux'):  # pylint: disable=R1714
++    if name in ('redhat', 'centos', 'almalinux', 'cloudlinux', 'openela'):  # pylint: disable=R1714
+         if version.startswith("8"):
+             # redhat8+ default to py3
+             set_bin_files(data_files, dest=agent_bin_path,
+diff --git a/tests/common/osutil/test_factory.py b/tests/common/osutil/test_factory.py
+index 9a76eb8..5007242 100644
+--- a/tests/common/osutil/test_factory.py
++++ b/tests/common/osutil/test_factory.py
+@@ -258,6 +258,13 @@ class TestOsUtilFactory(AgentTestCase):
+         self.assertTrue(isinstance(ret, RedhatOSUtil))
+         self.assertEqual(ret.get_service_name(), "waagent")
+ 
++        ret = _get_osutil(distro_name="openela",
++                          distro_code_name="",
++                          distro_full_name="",
++                          distro_version="8")
++        self.assertTrue(isinstance(ret, RedhatOSUtil))
++        self.assertEqual(ret.get_service_name(), "waagent")
++
+     def test_get_osutil_it_should_return_euleros(self):
+         ret = _get_osutil(distro_name="euleros",
+                           distro_code_name="",
+-- 
+2.37.3
+

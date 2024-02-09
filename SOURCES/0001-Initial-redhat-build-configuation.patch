@@ -1,0 +1,75 @@
+From 9d071a9b4b40f0f86bb0b739b72c0b9b4870f060 Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Fri, 14 May 2021 09:42:08 +0200
+Subject: Initial redhat build configuation.
+
+Using .distro repository to hold redhat tools and configuration.
+
+Package can be built on brew using rh-rhel-koji command.
+
+Note: Old rh-brew target is supported.
+
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+Merged patches (2.7.0.6):
+- 896c5c83 Require iptables package
+- a702a0d1 (origin/rhel-9.0.0-beta) source-git: Use dynamic SRPM_NAME
+---
+ .distro/Makefile                     |  73 ++++++
+ .distro/Makefile.common              |  18 ++
+ .distro/WALinuxAgent.spec.template   | 254 +++++++++++++++++++++
+ .distro/module-setup.sh              |  16 ++
+ .distro/rpmbuild/BUILD/.gitignore    |   2 +
+ .distro/rpmbuild/RPMS/.gitignore     |   2 +
+ .distro/rpmbuild/SOURCES/.gitignore  |   2 +
+ .distro/rpmbuild/SPECS/.gitignore    |   2 +
+ .distro/rpmbuild/SRPMS/.gitignore    |   2 +
+ .distro/scripts/extract_build_cmd.py |  83 +++++++
+ .distro/scripts/frh.py               |  24 ++
+ .distro/scripts/git-backport-diff    | 327 +++++++++++++++++++++++++++
+ .distro/scripts/git-compile-check    | 215 ++++++++++++++++++
+ .distro/scripts/process-patches.sh   |  92 ++++++++
+ .distro/scripts/tarball_checksum.sh  |   3 +
+ setup.py                             |   4 +-
+ 16 files changed, 1117 insertions(+), 2 deletions(-)
+ create mode 100644 .distro/Makefile
+ create mode 100644 .distro/Makefile.common
+ create mode 100644 .distro/WALinuxAgent.spec.template
+ create mode 100644 .distro/module-setup.sh
+ create mode 100644 .distro/rpmbuild/BUILD/.gitignore
+ create mode 100644 .distro/rpmbuild/RPMS/.gitignore
+ create mode 100644 .distro/rpmbuild/SOURCES/.gitignore
+ create mode 100644 .distro/rpmbuild/SPECS/.gitignore
+ create mode 100644 .distro/rpmbuild/SRPMS/.gitignore
+ create mode 100755 .distro/scripts/extract_build_cmd.py
+ create mode 100755 .distro/scripts/frh.py
+ create mode 100755 .distro/scripts/git-backport-diff
+ create mode 100755 .distro/scripts/git-compile-check
+ create mode 100755 .distro/scripts/process-patches.sh
+ create mode 100755 .distro/scripts/tarball_checksum.sh
+
+diff --git a/setup.py b/setup.py
+index 12c9e1d6..e4d7cf7e 100755
+--- a/setup.py
++++ b/setup.py
+@@ -97,7 +97,7 @@ def get_data_files(name, version, fullname):  # pylint: disable=R0912
+     agent_bin_path = osutil.get_agent_bin_path()
+ 
+     if name in ('redhat', 'centos', 'almalinux', 'cloudlinux'):  # pylint: disable=R1714
+-        if version.startswith("8.2"):
++        if version.startswith("9"):
+             # redhat8+ default to py3
+             set_bin_files(data_files, dest=agent_bin_path,
+                           src=["bin/py3/waagent", "bin/waagent2.0"])
+@@ -106,7 +106,7 @@ def get_data_files(name, version, fullname):  # pylint: disable=R0912
+         set_conf_files(data_files)
+         set_logrotate_files(data_files)
+         set_udev_files(data_files)
+-        if version.startswith("8.2"):
++        if version.startswith("9"):
+             # redhat 8+ uses systemd and python3
+             set_systemd_files(data_files, dest=systemd_dir_path,
+                               src=["init/redhat/waagent.service",
+-- 
+2.31.1
+

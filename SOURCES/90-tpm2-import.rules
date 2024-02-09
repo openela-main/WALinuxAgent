@@ -1,0 +1,1 @@
+SUBSYSTEM=="block", ENV{ID_FS_TYPE}=="crypto_LUKS", RUN+="/usr/sbin/tpm2-luks-import.sh /dev/$name"

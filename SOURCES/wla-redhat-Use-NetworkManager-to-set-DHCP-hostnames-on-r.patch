@@ -1,0 +1,49 @@
+From f45dc73365999334e680d64c90d36f710a0c7831 Mon Sep 17 00:00:00 2001
+From: Mohammed Gamal <mgamal@redhat.com>
+Date: Fri, 29 Jul 2022 13:07:13 +0200
+Subject: [PATCH 1/2] redhat: Use NetworkManager to set DHCP hostnames on
+ recent RHEL distros
+
+RH-Author: Mohamed Gamal Morsy <mmorsy@redhat.com>
+RH-MergeRequest: 8: redhat: Use NetworkManager to set DHCP hostnames on recent RHEL distros
+RH-Commit: [1/1] b83612e9d88bac7117541d7f7832f65ef268bbe3
+RH-Bugzilla: 2092002
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2092002
+
+Recent versions of RHEL 8 and RHEL 9 started using NetworkManager to configure
+network intefaces instead of sysconfig files. Configurations are no longer
+stored in /etc/sysconfig/ifcfg-{interface}.
+
+Fix this for setting DHCP hostnames in those RHEL versions.
+
+Signed-off-by: Mohammed Gamal <mgamal@redhat.com>
+---
+ azurelinuxagent/common/osutil/redhat.py | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/azurelinuxagent/common/osutil/redhat.py b/azurelinuxagent/common/osutil/redhat.py
+index 5c397ae8..7dd36add 100644
+--- a/azurelinuxagent/common/osutil/redhat.py
++++ b/azurelinuxagent/common/osutil/redhat.py
+@@ -158,3 +158,15 @@ class RedhatOSUtil(Redhat6xOSUtil):
+                 time.sleep(wait)
+             else:
+                 logger.warn("exceeded restart retries")
++
++    def set_dhcp_hostname(self, hostname):
++        """
++        Recent RHEL distributions use network manager instead of sysconfig files
++        to configure network interfaces
++        """
++        ifname = self.get_if_name()
++
++        return_code = shellutil.run("nmcli device modify {0} ipv4.dhcp-hostname {1} ipv6.dhcp-hostname {1}".format(ifname, hostname))
++
++        if return_code != 0:
++            logger.error("failed to set DHCP hostname for interface {0}: return code {1}".format(ifname, return_code))
+-- 
+2.31.1
+

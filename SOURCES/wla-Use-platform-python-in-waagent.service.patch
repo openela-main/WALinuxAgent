@@ -1,0 +1,45 @@
+From 85638d1238ba9ab0c77138133ab1b7c7069e3821 Mon Sep 17 00:00:00 2001
+From: Vitaly Kuznetsov <vkuznets@redhat.com>
+Date: Tue, 21 Feb 2023 10:29:52 +0100
+Subject: [PATCH 2/2] Use platform-python in waagent.service
+
+RH-Author: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-MergeRequest: 16: Use platform-python in waagent.service
+RH-Bugzilla: 2170104
+RH-Acked-by: Mohamed Gamal Morsy <mmorsy@redhat.com>
+RH-Acked-by: Emanuele Giuseppe Esposito <eesposit@redhat.com>
+RH-Commit: [2/2] e548a4d37bd89e6e2eb471b5193b76f1f9f9529b
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2170104
+Upstream: RHEL only
+
+WALinuxAgent in RHEL8 uses platform-python, which is python3.6.
+'waagent.service', however, overrides this by calling
+'/usr/bin/python3' directly and in case this point to a newer
+AppStream Python (e.g. Python3.9) WALinuxAgent breaks as it can't
+find its files.
+
+See also: https://github.com/Azure/WALinuxAgent/issues/2728
+See also: https://github.com/Azure/WALinuxAgent/pull/2729
+
+Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+---
+ init/redhat/waagent.service | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init/redhat/waagent.service b/init/redhat/waagent.service
+index dc11fbb1..29056395 100644
+--- a/init/redhat/waagent.service
++++ b/init/redhat/waagent.service
+@@ -8,7 +8,7 @@ ConditionPathExists=/etc/waagent.conf
+ 
+ [Service]
+ Type=simple
+-ExecStart=/usr/bin/python3 -u /usr/sbin/waagent -daemon
++ExecStart=/usr/sbin/waagent -daemon
+ Restart=always
+ RestartSec=5
+ Slice=azure.slice
+-- 
+2.37.3
+

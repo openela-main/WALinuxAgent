@@ -1,0 +1,57 @@
+From ac21739b94266387360a7ba2b3cfeb44c3df5b01 Mon Sep 17 00:00:00 2001
+From: Mohammed Gamal <mgamal@redhat.com>
+Date: Wed, 22 Jun 2022 13:36:07 +0200
+Subject: [PATCH] redhat: Fix command sequence for restarting net interface
+
+RH-Author: Mohamed Gamal Morsy <mmorsy@redhat.com>
+RH-MergeRequest: 4: redhat: Fix command sequence for restarting net interface
+RH-Commit: [1/1] ac14220635c30b3361399ae33a5ecd4e7d8cf92b
+RH-Bugzilla: 2080826
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2080826
+
+Apparently the down and up commands need to be run in the same command, so
+connect them together with "&&" operator. Also re-implement restart_if ot handle
+warnings same wat as other distros
+
+Signed-off-by: Mohammed Gamal <mgamal@redhat.com>
+---
+ azurelinuxagent/common/osutil/redhat.py | 22 ++++++++++------------
+ 1 file changed, 10 insertions(+), 12 deletions(-)
+
+diff --git a/azurelinuxagent/common/osutil/redhat.py b/azurelinuxagent/common/osutil/redhat.py
+index a02647cd..5c397ae8 100644
+--- a/azurelinuxagent/common/osutil/redhat.py
++++ b/azurelinuxagent/common/osutil/redhat.py
+@@ -147,16 +147,14 @@ class RedhatOSUtil(Redhat6xOSUtil):
+         """
+         Restart an interface by bouncing the link.
+         """
+-        retry_limit=retries+1
++        retry_limit = retries + 1
+         for attempt in range(1, retry_limit):
+-            try:
+-                shellutil.run_command(["ip", "link", "set", ifname, "down"])
+-                shellutil.run_command(["ip", "link", "set", ifname, "up"])
+-
+-            except shellutil.CommandError as cmd_err:
+-                logger.warn("failed to restart {0}: return code {1}".format(ifname, cmd_err.returncode))
+-                if attempt < retry_limit:
+-                    logger.info("retrying in {0} seconds".format(wait))
+-                    time.sleep(wait)
+-                else:
+-                    logger.warn("exceeded restart retries")
++            return_code = shellutil.run("ip link set {0} down && ip link set {0} up".format(ifname), expected_errors=[1] if attempt < retries else [])
++            if return_code == 0:
++                return
++            logger.warn("failed to restart {0}: return code {1}".format(ifname, return_code))
++            if attempt < retry_limit:
++                logger.info("retrying in {0} seconds".format(wait))
++                time.sleep(wait)
++            else:
++                logger.warn("exceeded restart retries")
+-- 
+2.35.3
+

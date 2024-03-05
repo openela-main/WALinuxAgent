@@ -1,0 +1,40 @@
+From 0a9c628d9edd67af7b6f20d034be85c1c552a512 Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Tue, 24 May 2022 04:10:46 -0400
+Subject: Implement restart_if for RedHat OS
+
+Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+Signed-off-by: Miroslav Rezanina <mrezanin@redhat.com>
+---
+ azurelinuxagent/common/osutil/redhat.py | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/azurelinuxagent/common/osutil/redhat.py b/azurelinuxagent/common/osutil/redhat.py
+index 9759d113..a02647cd 100644
+--- a/azurelinuxagent/common/osutil/redhat.py
++++ b/azurelinuxagent/common/osutil/redhat.py
+@@ -142,3 +142,21 @@ class RedhatOSUtil(Redhat6xOSUtil):
+             endpoint = self.get_endpoint_from_leases_path('/var/lib/NetworkManager/dhclient-*.lease')
+ 
+         return endpoint
++
++    def restart_if(self, ifname, retries=3, wait=5):
++        """
++        Restart an interface by bouncing the link.
++        """
++        retry_limit=retries+1
++        for attempt in range(1, retry_limit):
++            try:
++                shellutil.run_command(["ip", "link", "set", ifname, "down"])
++                shellutil.run_command(["ip", "link", "set", ifname, "up"])
++
++            except shellutil.CommandError as cmd_err:
++                logger.warn("failed to restart {0}: return code {1}".format(ifname, cmd_err.returncode))
++                if attempt < retry_limit:
++                    logger.info("retrying in {0} seconds".format(wait))
++                    time.sleep(wait)
++                else:
++                    logger.warn("exceeded restart retries")
+-- 
+2.31.1
+

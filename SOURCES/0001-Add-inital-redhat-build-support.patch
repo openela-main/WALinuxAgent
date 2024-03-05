@@ -1,0 +1,131 @@
+From ee6172c4d57103ac857bbd69c46f247cee5394c3 Mon Sep 17 00:00:00 2001
+From: Miroslav Rezanina <mrezanin@redhat.com>
+Date: Thu, 6 Oct 2016 12:25:35 +0200
+Subject: Add inital redhat build support
+
+Rebase notes (2.2.32):
+- Fix license text
+
+Rebase notes (2.2.26):
+- update to RHEL 8 build
+- Do not use INSTALED_FILES for %files
+
+Rebase notes (2.2.10):
+- switched to sha256
+- added .gitpublish profile
+
+Rebase notes (2.2.46):
+- added waagent-extn.logrotate
+
+Rebase notes (2.7.0.6):
+- new files - azure.slice and azure-vmextensions.slice
+- removed changes in not shipped scripts
+
+Merged patches (2.2.45):
+- df29beb Switch from platform-python to python36
+- 6749108 Stop packaging legacy waagent2.0
+
+Merged patches (2.2.32):
+- ce36fd9 Use Python3
+- 952c830 Remove FIPS setting from the default config
+- cc9df73 Switch hardcoded python3 shebangs into the %%{__python3} macro
+- 66b6f8c Use correct macro for waagent.service
+- 1b15ada Switch to platform-python in systemd unit file
+- 59f682b Use sys.executable to find system python
+
+Merged patches (2.2.49):
+- 3a23336 Mark logrotate configs with %config(noreplace)
+
+Merged patches (2.3.0.2):
+- 30bb06f9 Provide udev rules as a separate subpackage.
+
+Merged patches (2.7.0.6):
+- a790fb5c Require iptables for setting up persistent firewall rules
+---
+ .gitignore                                |   1 +
+ .gitpublish                               |   8 +
+ makepkg.py                                |   2 +-
+ redhat/.gitignore                         |   1 +
+ redhat/Makefile                           |  72 +++++
+ redhat/Makefile.common                    |  37 +++
+ redhat/WALinuxAgent.spec.template         | 243 ++++++++++++++++
+ redhat/rpmbuild/BUILD/.gitignore          |   2 +
+ redhat/rpmbuild/RPMS/.gitignore           |   2 +
+ redhat/rpmbuild/SOURCES/.gitignore        |   2 +
+ redhat/rpmbuild/SPECS/.gitignore          |   2 +
+ redhat/rpmbuild/SRPMS/.gitignore          |   2 +
+ redhat/scripts/frh.py                     |  27 ++
+ redhat/scripts/git-backport-diff          | 327 ++++++++++++++++++++++
+ redhat/scripts/git-compile-check          | 215 ++++++++++++++
+ redhat/scripts/process-patches.sh         |  93 ++++++
+ redhat/scripts/tarball_checksum.sh        |   3 +
+ setup.py                                  |   6 +-
+ tests/data/ext/sample_ext-1.3.0/sample.py |   2 +-
+ 19 files changed, 1042 insertions(+), 5 deletions(-)
+ create mode 100644 .gitpublish
+ create mode 100644 redhat/.gitignore
+ create mode 100644 redhat/Makefile
+ create mode 100644 redhat/Makefile.common
+ create mode 100644 redhat/WALinuxAgent.spec.template
+ create mode 100644 redhat/rpmbuild/BUILD/.gitignore
+ create mode 100644 redhat/rpmbuild/RPMS/.gitignore
+ create mode 100644 redhat/rpmbuild/SOURCES/.gitignore
+ create mode 100644 redhat/rpmbuild/SPECS/.gitignore
+ create mode 100644 redhat/rpmbuild/SRPMS/.gitignore
+ create mode 100755 redhat/scripts/frh.py
+ create mode 100755 redhat/scripts/git-backport-diff
+ create mode 100755 redhat/scripts/git-compile-check
+ create mode 100755 redhat/scripts/process-patches.sh
+ create mode 100755 redhat/scripts/tarball_checksum.sh
+
+diff --git a/makepkg.py b/makepkg.py
+index 11e90b95..1b6b4351 100755
+--- a/makepkg.py
++++ b/makepkg.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ 
+ import glob
+ import os
+diff --git a/setup.py b/setup.py
+index 12c9e1d6..586bb5ca 100755
+--- a/setup.py
++++ b/setup.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ # Microsoft Azure Linux Agent setup.py
+ #
+@@ -97,7 +97,7 @@ def get_data_files(name, version, fullname):  # pylint: disable=R0912
+     agent_bin_path = osutil.get_agent_bin_path()
+ 
+     if name in ('redhat', 'centos', 'almalinux', 'cloudlinux'):  # pylint: disable=R1714
+-        if version.startswith("8.2"):
++        if version.startswith("8"):
+             # redhat8+ default to py3
+             set_bin_files(data_files, dest=agent_bin_path,
+                           src=["bin/py3/waagent", "bin/waagent2.0"])
+@@ -106,7 +106,7 @@ def get_data_files(name, version, fullname):  # pylint: disable=R0912
+         set_conf_files(data_files)
+         set_logrotate_files(data_files)
+         set_udev_files(data_files)
+-        if version.startswith("8.2"):
++        if version.startswith("8"):
+             # redhat 8+ uses systemd and python3
+             set_systemd_files(data_files, dest=systemd_dir_path,
+                               src=["init/redhat/waagent.service",
+diff --git a/tests/data/ext/sample_ext-1.3.0/sample.py b/tests/data/ext/sample_ext-1.3.0/sample.py
+index 47f86af8..92585ed3 100755
+--- a/tests/data/ext/sample_ext-1.3.0/sample.py
++++ b/tests/data/ext/sample_ext-1.3.0/sample.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ import json
+ import os
+ import re
+-- 
+2.31.1
+

@@ -4,7 +4,7 @@
 
 Name:                 WALinuxAgent
 Version:              2.7.0.6
-Release:              9%{?dist}.1.openela.0
+Release:              10%{?dist}.openela.0
 Summary:              The Microsoft Azure Linux Agent
 
 License:              ASL 2.0
@@ -24,7 +24,9 @@ Patch3:               wla-redhat-Fix-command-sequence-for-restarting-net-inter.p
 Patch4:               wla-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.patch
 # For bz#2093965 - [Azure][WALA][RHEL-9] The description of "Logs.Collect" is incorrect
 Patch5:               wla-Update-Log-Collector-default-in-Comments-and-Readme-.patch
-Patch6:               9999-add-openela-temporarily.patch
+# For RHEL-7273 - [Azure][WALA] Consider to disable Log collector
+Patch6:               wla-Disable-automatic-log-collector.patch
+Patch7:               9999-add-openela-temporarily.patch
 
 # Source-git patches
 
@@ -160,12 +162,13 @@ rm -rf %{_unitdir}/waagent.service.d/
 %endif
 
 %changelog
-* Fri Feb 09 2024 Release Engineering <releng@openela.org> - 2.7.0.6.openela.0
+* Tue Nov 12 2024 Release Engineering <releng@openela.org> - 2.7.0.6.openela.0
 - Backport OpenELA temporarily
 
-* Tue Jul 18 2023 Miroslav Rezanina <mrezanin@redhat.com> - 2.7.0.6-9.el9_2.1
-- Rebuild for BZ 2222947
-- Resolves: bz#2222947
+* Thu May 09 2024 Miroslav Rezanina <mrezanin@redhat.com> - 2.7.0.6-10
+- wla-Disable-automatic-log-collector.patch [RHEL-7273]
+- Resolves: RHEL-7273
+  ([Azure][WALA] Consider to disable Log collector)
 
 * Wed Feb 08 2023 Miroslav Rezanina <mrezanin@redhat.com> - 2.7.0.6-9
 - wla-redhat-Adjust-tpm2_createprimary-key-attributes-to-m.patch [bz#2167322]

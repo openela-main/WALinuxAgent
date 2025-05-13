@@ -4,7 +4,7 @@
 
 Name:                 WALinuxAgent
 Version:              2.7.0.6
-Release:              10%{?dist}.openela.0
+Release:              11%{?dist}.openela.0
 Summary:              The Microsoft Azure Linux Agent
 
 License:              ASL 2.0
@@ -26,7 +26,9 @@ Patch4:               wla-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.p
 Patch5:               wla-Update-Log-Collector-default-in-Comments-and-Readme-.patch
 # For RHEL-7273 - [Azure][WALA] Consider to disable Log collector
 Patch6:               wla-Disable-automatic-log-collector.patch
-Patch7:               9999-add-openela-temporarily.patch
+# For RHEL-5880 - [Azure][RHEL-9]68-azure-sriov-nm-unmanaged.rules cannot stop NetworkManager-wait-online.service checking SRIOV interface
+Patch7:               wla-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch
+Patch8:               9999-add-openela-temporarily.patch
 
 # Source-git patches
 
@@ -145,6 +147,7 @@ rm -rf %{_unitdir}/waagent.service.d/
 %{python3_sitelib}/*.egg-info
 
 %files udev
+%{_udevrulesdir}/10-azure-unmanaged-sriov.rules
 %{_udevrulesdir}/66-azure-storage.rules
 %{_udevrulesdir}/99-azure-product-uuid.rules
 %dir %{_prefix}/lib/dracut/modules.d/%{dracut_modname_udev}
@@ -162,8 +165,13 @@ rm -rf %{_unitdir}/waagent.service.d/
 %endif
 
 %changelog
-* Tue Nov 12 2024 Release Engineering <releng@openela.org> - 2.7.0.6.openela.0
+* Tue May 13 2025 Release Engineering <releng@openela.org> - 2.7.0.6.openela.0
 - Backport OpenELA temporarily
+
+* Fri Jan 17 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.7.0.6-11
+- wla-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch [RHEL-5880]
+- Resolves: RHEL-5880
+  ([Azure][RHEL-9]68-azure-sriov-nm-unmanaged.rules cannot stop NetworkManager-wait-online.service checking SRIOV interface)
 
 * Thu May 09 2024 Miroslav Rezanina <mrezanin@redhat.com> - 2.7.0.6-10
 - wla-Disable-automatic-log-collector.patch [RHEL-7273]

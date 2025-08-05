@@ -13,5 +13,5 @@ depends() {
 # called by dracut
 install() {
     inst_multiple cut readlink chmod
-    inst_rules 66-azure-storage.rules 99-azure-product-uuid.rules
+    inst_rules 10-azure-unmanaged-sriov.rules 66-azure-storage.rules 99-azure-product-uuid.rules
 }

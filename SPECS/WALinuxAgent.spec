@@ -4,7 +4,7 @@
 
 Name:                 WALinuxAgent
 Version:              2.7.0.6
-Release:              11%{?dist}.openela.0
+Release:              11%{?dist}.1.openela.0
 Summary:              The Microsoft Azure Linux Agent
 
 License:              ASL 2.0
@@ -165,8 +165,13 @@ rm -rf %{_unitdir}/waagent.service.d/
 %endif
 
 %changelog
-* Tue May 13 2025 Release Engineering <releng@openela.org> - 2.7.0.6.openela.0
+* Tue Aug 05 2025 Release Engineering <releng@openela.org> - 2.7.0.6.openela.0
 - Backport OpenELA temporarily
+
+* Tue May 06 2025 Jon Maloy <jmaloy@redhat.com> - 2.7.0.6-11.el9_6.1
+- wla-redhat-Include-10-azure-unmanaged-sriov.rules-into-i.patch [RHEL-88808]
+- Resolves: RHEL-88808
+  ([Azure][ARM][RHEL-9] Kdump cannot save vmcore via ssh or nfs [rhel-9.6.z])
 
 * Fri Jan 17 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.7.0.6-11
 - wla-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch [RHEL-5880]

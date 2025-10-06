@@ -1,0 +1,38 @@
+From 896d0f1edfbfad20c2eecb04fca17e7dc335dfb8 Mon Sep 17 00:00:00 2001
+From: Ani Sinha <anisinha@redhat.com>
+Date: Mon, 6 May 2024 11:50:49 +0530
+Subject: [PATCH] Disable automatic log collector
+
+RH-Author: Ani Sinha <anisinha@redhat.com>
+RH-MergeRequest: 12: Disable automatic log collector
+RH-Jira: RHEL-35963
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [1/1] d885b584e6bf7ad7d2169b21bcc12db2b526b651 (anisinha/centos-wa-linux-agent)
+
+Log collector is enabled by default. Due to security concerns from our customers
+disable it.
+
+Jira: https://issues.redhat.com/browse/RHEL-35963
+Upstream: RHEL only.
+
+Signed-off-by: Ani Sinha <anisinha@redhat.com>
+---
+ config/waagent.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/config/waagent.conf b/config/waagent.conf
+index 7316dc2d..4a345fc0 100644
+--- a/config/waagent.conf
++++ b/config/waagent.conf
+@@ -70,7 +70,7 @@ Logs.Verbose=n
+ # Logs.Console=y
+ 
+ # Enable periodic log collection, default is y
+-Logs.Collect=y
++Logs.Collect=n
+ 
+ # How frequently to collect logs, default is each hour
+ Logs.CollectPeriod=3600
+-- 
+2.39.3
+

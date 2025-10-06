@@ -1,0 +1,61 @@
+From 8cc6f62bd1be39e60be6ae606ea4beb76ae24d7c Mon Sep 17 00:00:00 2001
+From: Mohammed Gamal <mgamal@redhat.com>
+Date: Fri, 29 Jul 2022 13:07:13 +0200
+Subject: [PATCH 1/4] redhat: Use NetworkManager to set DHCP hostnames on
+ recent RHEL distros
+
+RH-Author: Ani Sinha <anisinha@redhat.com>
+RH-MergeRequest: 13: sync c10s branch from c9s
+RH-Jira: RHEL-40966
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [1/4] 05e1d05db526deae49e976dea3bae140ea1b2ecf (anisinha/centos-wa-linux-agent)
+
+RH-Author: Mohamed Gamal Morsy <mmorsy@redhat.com>
+RH-MergeRequest: 3: redhat: Use NetworkManager to set DHCP hostnames on recent RHEL distros
+RH-Commit: [1/1] 2bf51293796ba0e8567e436836adc0547f062b04
+RH-Bugzilla: 2114830
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+
+Bugzilla: https://bugzilla.redhat.com/show_bug.cgi?id=2114830
+
+Recent versions of RHEL 8 and RHEL 9 started using NetworkManager to configure
+network intefaces instead of sysconfig files. Configurations are no longer
+stored in /etc/sysconfig/ifcfg-{interface}.
+
+Fix this for setting DHCP hostnames in those RHEL versions.
+
+Signed-off-by: Mohammed Gamal <mgamal@redhat.com>
+
+Patch-name: wla-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.patch
+Patch-id:
+Patch-present-in-specfile: True
+(cherry picked from commit 8400a993c6c27f8f8fc598f81e2c329dc8255805)
+---
+ azurelinuxagent/common/osutil/redhat.py | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/azurelinuxagent/common/osutil/redhat.py b/azurelinuxagent/common/osutil/redhat.py
+index 312dd160..4b46a97a 100644
+--- a/azurelinuxagent/common/osutil/redhat.py
++++ b/azurelinuxagent/common/osutil/redhat.py
+@@ -164,3 +164,15 @@ class RedhatOSModernUtil(RedhatOSUtil):
+                 time.sleep(wait)
+             else:
+                 logger.warn("exceeded restart retries")
++
++    def set_dhcp_hostname(self, hostname):
++        """
++        Recent RHEL distributions use network manager instead of sysconfig files
++        to configure network interfaces
++        """
++        ifname = self.get_if_name()
++
++        return_code = shellutil.run("nmcli device modify {0} ipv4.dhcp-hostname {1} ipv6.dhcp-hostname {1}".format(ifname, hostname))
++
++        if return_code != 0:
++            logger.error("failed to set DHCP hostname for interface {0}: return code {1}".format(ifname, return_code))
+-- 
+2.39.3
+

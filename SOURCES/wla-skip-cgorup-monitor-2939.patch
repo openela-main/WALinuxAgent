@@ -1,0 +1,288 @@
+From 3747dabadea2fe288e6991723e5364179b2906dd Mon Sep 17 00:00:00 2001
+From: Nageswara Nandigam <84482346+nagworld9@users.noreply.github.com>
+Date: Mon, 9 Oct 2023 11:14:30 -0700
+Subject: [PATCH] skip cgorup monitor (#2939)
+
+RH-Author: Ani Sinha <anisinha@redhat.com>
+RH-MergeRequest: 14: skip cgorup monitor (#2939)
+RH-Jira: RHEL-46713
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Emanuele Giuseppe Esposito <eesposit@redhat.com>
+RH-Commit: [1/1] 613c87b13204159b6b33214d0cf02ed25bcd67e7 (anisinha/centos-wa-linux-agent)
+
+(cherry picked from commit 5bad0b4b19c907386b80ec18ad1423cdb7f3a050)
+Signed-off-by: Ani Sinha <anisinha@redhat.com>
+
+Conflicts:
+	azurelinuxagent/agent.py
+	azurelinuxagent/common/logcollector.py
+	tests/common/test_logcollector.py
+             All due to libraries being moved around in upstream.
+---
+ azurelinuxagent/agent.py               | 30 +++++++++++++++++++-------
+ azurelinuxagent/common/logcollector.py | 15 +------------
+ azurelinuxagent/ga/collect_logs.py     | 10 ++++-----
+ tests/common/test_logcollector.py      | 16 +++++++-------
+ tests/test_agent.py                    |  8 +++----
+ 5 files changed, 40 insertions(+), 39 deletions(-)
+
+diff --git a/azurelinuxagent/agent.py b/azurelinuxagent/agent.py
+index 8c303482..0fb681e6 100644
+--- a/azurelinuxagent/agent.py
++++ b/azurelinuxagent/agent.py
+@@ -30,6 +30,7 @@ import sys
+ import threading
+ from azurelinuxagent.common import cgroupconfigurator, logcollector
+ from azurelinuxagent.common.cgroupapi import SystemdCgroupsApi
++from azurelinuxagent.common.cgroup import AGENT_LOG_COLLECTOR, CpuCgroup, MemoryCgroup
+ 
+ import azurelinuxagent.common.conf as conf
+ import azurelinuxagent.common.event as event
+@@ -204,11 +205,10 @@ class Agent(object):
+             logger.info("Running log collector mode normal")
+ 
+         # Check the cgroups unit
+-        cpu_cgroup_path, memory_cgroup_path, log_collector_monitor = None, None, None
+-        if CollectLogsHandler.should_validate_cgroups():
+-            cgroups_api = SystemdCgroupsApi()
+-            cpu_cgroup_path, memory_cgroup_path = cgroups_api.get_process_cgroup_paths("self")
+-
++        log_collector_monitor = None
++        cgroups_api = SystemdCgroupsApi()
++        cpu_cgroup_path, memory_cgroup_path = cgroups_api.get_process_cgroup_paths("self")
++        if CollectLogsHandler.is_enabled_monitor_cgroups_check():
+             cpu_slice_matches = (cgroupconfigurator.LOGCOLLECTOR_SLICE in cpu_cgroup_path)
+             memory_slice_matches = (cgroupconfigurator.LOGCOLLECTOR_SLICE in memory_cgroup_path)
+ 
+@@ -221,10 +221,24 @@ class Agent(object):
+ 
+                 sys.exit(logcollector.INVALID_CGROUPS_ERRCODE)
+ 
++        def initialize_cgroups_tracking(cpu_cgroup_path, memory_cgroup_path):
++            cpu_cgroup = CpuCgroup(AGENT_LOG_COLLECTOR, cpu_cgroup_path)
++            msg = "Started tracking cpu cgroup {0}".format(cpu_cgroup)
++            logger.info(msg)
++            cpu_cgroup.initialize_cpu_usage()
++            memory_cgroup = MemoryCgroup(AGENT_LOG_COLLECTOR, memory_cgroup_path)
++            msg = "Started tracking memory cgroup {0}".format(memory_cgroup)
++            logger.info(msg)
++            return [cpu_cgroup, memory_cgroup]
++
+         try:
+-            log_collector = LogCollector(is_full_mode, cpu_cgroup_path, memory_cgroup_path)
+-            log_collector_monitor = get_log_collector_monitor_handler(log_collector.cgroups)
+-            log_collector_monitor.run()
++            log_collector = LogCollector(is_full_mode)
++            # Running log collector resource(CPU, Memory) monitoring only if agent starts the log collector.
++            # If Log collector start by any other means, then it will not be monitored.
++            if CollectLogsHandler.is_enabled_monitor_cgroups_check():
++                tracked_cgroups = initialize_cgroups_tracking(cpu_cgroup_path, memory_cgroup_path)
++                log_collector_monitor = get_log_collector_monitor_handler(tracked_cgroups)
++                log_collector_monitor.run()
+             archive = log_collector.collect_logs_and_get_archive()
+             logger.info("Log collection successfully completed. Archive can be found at {0} "
+                   "and detailed log output can be found at {1}".format(archive, OUTPUT_RESULTS_FILE_PATH))
+diff --git a/azurelinuxagent/common/logcollector.py b/azurelinuxagent/common/logcollector.py
+index fe62a7db..5f45a7de 100644
+--- a/azurelinuxagent/common/logcollector.py
++++ b/azurelinuxagent/common/logcollector.py
+@@ -26,7 +26,6 @@ import zipfile
+ from datetime import datetime
+ from heapq import heappush, heappop
+ 
+-from azurelinuxagent.common.cgroup import CpuCgroup, AGENT_LOG_COLLECTOR, MemoryCgroup
+ from azurelinuxagent.common.conf import get_lib_dir, get_ext_log_dir, get_agent_log_file
+ from azurelinuxagent.common.event import initialize_event_logger_vminfo_common_parameters
+ from azurelinuxagent.common.future import ustr
+@@ -71,14 +70,13 @@ class LogCollector(object):
+ 
+     _TRUNCATED_FILE_PREFIX = "truncated_"
+ 
+-    def __init__(self, is_full_mode=False, cpu_cgroup_path=None, memory_cgroup_path=None):
++    def __init__(self, is_full_mode=False):
+         self._is_full_mode = is_full_mode
+         self._manifest = MANIFEST_FULL if is_full_mode else MANIFEST_NORMAL
+         self._must_collect_files = self._expand_must_collect_files()
+         self._create_base_dirs()
+         self._set_logger()
+         self._initialize_telemetry()
+-        self.cgroups = self._set_resource_usage_cgroups(cpu_cgroup_path, memory_cgroup_path)
+ 
+     @staticmethod
+     def _mkdir(dirname):
+@@ -105,17 +103,6 @@ class LogCollector(object):
+         _LOGGER.addHandler(_f_handler)
+         _LOGGER.setLevel(logging.INFO)
+ 
+-    @staticmethod
+-    def _set_resource_usage_cgroups(cpu_cgroup_path, memory_cgroup_path):
+-        cpu_cgroup = CpuCgroup(AGENT_LOG_COLLECTOR, cpu_cgroup_path)
+-        msg = "Started tracking cpu cgroup {0}".format(cpu_cgroup)
+-        _LOGGER.info(msg)
+-        cpu_cgroup.initialize_cpu_usage()
+-        memory_cgroup = MemoryCgroup(AGENT_LOG_COLLECTOR, memory_cgroup_path)
+-        msg = "Started tracking memory cgroup {0}".format(memory_cgroup)
+-        _LOGGER.info(msg)
+-        return [cpu_cgroup, memory_cgroup]
+-
+     @staticmethod
+     def _initialize_telemetry():
+         protocol = get_protocol_util().get_protocol(init_goal_state=False)
+diff --git a/azurelinuxagent/ga/collect_logs.py b/azurelinuxagent/ga/collect_logs.py
+index 95c42f3a..4f42e149 100644
+--- a/azurelinuxagent/ga/collect_logs.py
++++ b/azurelinuxagent/ga/collect_logs.py
+@@ -83,16 +83,16 @@ class CollectLogsHandler(ThreadHandlerInterface):
+         return CollectLogsHandler._THREAD_NAME
+ 
+     @staticmethod
+-    def enable_cgroups_validation():
++    def enable_monitor_cgroups_check():
+         os.environ[CollectLogsHandler.__CGROUPS_FLAG_ENV_VARIABLE] = "1"
+ 
+     @staticmethod
+-    def disable_cgroups_validation():
++    def disable_monitor_cgroups_check():
+         if CollectLogsHandler.__CGROUPS_FLAG_ENV_VARIABLE in os.environ:
+             del os.environ[CollectLogsHandler.__CGROUPS_FLAG_ENV_VARIABLE]
+ 
+     @staticmethod
+-    def should_validate_cgroups():
++    def is_enabled_monitor_cgroups_check():
+         if CollectLogsHandler.__CGROUPS_FLAG_ENV_VARIABLE in os.environ:
+             return os.environ[CollectLogsHandler.__CGROUPS_FLAG_ENV_VARIABLE] == "1"
+         return False
+@@ -147,7 +147,7 @@ class CollectLogsHandler(ThreadHandlerInterface):
+         time.sleep(_INITIAL_LOG_COLLECTION_DELAY)
+ 
+         try:
+-            CollectLogsHandler.enable_cgroups_validation()
++            CollectLogsHandler.enable_monitor_cgroups_check()
+             if self.protocol_util is None or self.protocol is None:
+                 self.init_protocols()
+ 
+@@ -162,7 +162,7 @@ class CollectLogsHandler(ThreadHandlerInterface):
+         except Exception as e:
+             logger.error("An error occurred in the log collection thread; will exit the thread.\n{0}", ustr(e))
+         finally:
+-            CollectLogsHandler.disable_cgroups_validation()
++            CollectLogsHandler.disable_monitor_cgroups_check()
+ 
+     def collect_and_send_logs(self):
+         if self._collect_logs():
+diff --git a/tests/common/test_logcollector.py b/tests/common/test_logcollector.py
+index 521e0f23..bf402cc7 100644
+--- a/tests/common/test_logcollector.py
++++ b/tests/common/test_logcollector.py
+@@ -212,7 +212,7 @@ diskinfo,""".format(folder_to_list, file_to_collect)
+ 
+         with patch("azurelinuxagent.common.logcollector.MANIFEST_NORMAL", manifest):
+             with patch('azurelinuxagent.common.logcollector.LogCollector._initialize_telemetry'):
+-                log_collector = LogCollector(cpu_cgroup_path="dummy_cpu_path", memory_cgroup_path="dummy_memory_path")
++                log_collector = LogCollector()
+                 archive = log_collector.collect_logs_and_get_archive()
+ 
+         with open(self.output_results_file_path, "r") as fh:
+@@ -241,7 +241,7 @@ copy,{0}
+ 
+         with patch("azurelinuxagent.common.logcollector.MANIFEST_FULL", manifest):
+             with patch('azurelinuxagent.common.logcollector.LogCollector._initialize_telemetry'):
+-                log_collector = LogCollector(is_full_mode=True, cpu_cgroup_path="dummy_cpu_path", memory_cgroup_path="dummy_memory_path")
++                log_collector = LogCollector(is_full_mode=True)
+                 archive = log_collector.collect_logs_and_get_archive()
+ 
+         self._assert_archive_created(archive)
+@@ -255,7 +255,7 @@ copy,{0}
+         # and combined they do not cross the archive size threshold.
+ 
+         with patch('azurelinuxagent.common.logcollector.LogCollector._initialize_telemetry'):
+-            log_collector = LogCollector(cpu_cgroup_path="dummy_cpu_path", memory_cgroup_path="dummy_memory_path")
++            log_collector = LogCollector()
+             archive = log_collector.collect_logs_and_get_archive()
+ 
+         self._assert_archive_created(archive)
+@@ -277,7 +277,7 @@ copy,{0}
+         # Set the size limit so that some files are too large to collect in full.
+         with patch("azurelinuxagent.common.logcollector._FILE_SIZE_LIMIT", SMALL_FILE_SIZE):
+             with patch('azurelinuxagent.common.logcollector.LogCollector._initialize_telemetry'):
+-                log_collector = LogCollector(cpu_cgroup_path="dummy_cpu_path", memory_cgroup_path="dummy_memory_path")
++                log_collector = LogCollector()
+                 archive = log_collector.collect_logs_and_get_archive()
+ 
+         self._assert_archive_created(archive)
+@@ -311,7 +311,7 @@ copy,{0}
+         with patch("azurelinuxagent.common.logcollector._UNCOMPRESSED_ARCHIVE_SIZE_LIMIT", 10 * 1024 * 1024):
+             with patch("azurelinuxagent.common.logcollector._MUST_COLLECT_FILES", must_collect_files):
+                 with patch('azurelinuxagent.common.logcollector.LogCollector._initialize_telemetry'):
+-                    log_collector = LogCollector(cpu_cgroup_path="dummy_cpu_path", memory_cgroup_path="dummy_memory_path")
++                    log_collector = LogCollector()
+                     archive = log_collector.collect_logs_and_get_archive()
+ 
+         self._assert_archive_created(archive)
+@@ -362,7 +362,7 @@ copy,{0}
+         # Ensure the archive reflects the state of files on the disk at collection time. If a file was updated, it
+         # needs to be updated in the archive, deleted if removed from disk, and added if not previously seen.
+         with patch('azurelinuxagent.common.logcollector.LogCollector._initialize_telemetry'):
+-            log_collector = LogCollector(cpu_cgroup_path="dummy_cpu_path", memory_cgroup_path="dummy_memory_path")
++            log_collector = LogCollector()
+             first_archive = log_collector.collect_logs_and_get_archive()
+         self._assert_archive_created(first_archive)
+ 
+@@ -433,7 +433,7 @@ copy,{0}
+             with patch("azurelinuxagent.common.logcollector._MUST_COLLECT_FILES", must_collect_files):
+                 with patch("azurelinuxagent.common.logcollector._FILE_SIZE_LIMIT", SMALL_FILE_SIZE):
+                     with patch('azurelinuxagent.common.logcollector.LogCollector._initialize_telemetry'):
+-                        log_collector = LogCollector(cpu_cgroup_path="dummy_cpu_path", memory_cgroup_path="dummy_memory_path")
++                        log_collector = LogCollector()
+                         archive = log_collector.collect_logs_and_get_archive()
+ 
+         self._assert_archive_created(archive)
+@@ -455,7 +455,7 @@ copy,{0}
+             with patch("azurelinuxagent.common.logcollector._MUST_COLLECT_FILES", must_collect_files):
+                 with patch("azurelinuxagent.common.logcollector._FILE_SIZE_LIMIT", SMALL_FILE_SIZE):
+                     with patch('azurelinuxagent.common.logcollector.LogCollector._initialize_telemetry'):
+-                        log_collector = LogCollector(cpu_cgroup_path="dummy_cpu_path", memory_cgroup_path="dummy_memory_path")
++                        log_collector = LogCollector()
+                         second_archive = log_collector.collect_logs_and_get_archive()
+ 
+         expected_files = [
+diff --git a/tests/test_agent.py b/tests/test_agent.py
+index f0f773f0..f5e87c87 100644
+--- a/tests/test_agent.py
++++ b/tests/test_agent.py
+@@ -231,7 +231,7 @@ class TestAgent(AgentTestCase):
+     @patch("azurelinuxagent.agent.LogCollector")
+     def test_calls_collect_logs_on_valid_cgroups(self, mock_log_collector):
+         try:
+-            CollectLogsHandler.enable_cgroups_validation()
++            CollectLogsHandler.enable_monitor_cgroups_check()
+             mock_log_collector.run = Mock()
+ 
+             def mock_cgroup_paths(*args, **kwargs):
+@@ -246,12 +246,12 @@ class TestAgent(AgentTestCase):
+                 
+                 mock_log_collector.assert_called_once()
+         finally:
+-            CollectLogsHandler.disable_cgroups_validation()
++            CollectLogsHandler.disable_monitor_cgroups_check()
+ 
+     @patch("azurelinuxagent.agent.LogCollector")
+     def test_doesnt_call_collect_logs_on_invalid_cgroups(self, mock_log_collector):
+         try:
+-            CollectLogsHandler.enable_cgroups_validation()
++            CollectLogsHandler.enable_monitor_cgroups_check()
+             mock_log_collector.run = Mock()
+ 
+             def mock_cgroup_paths(*args, **kwargs):
+@@ -270,7 +270,7 @@ class TestAgent(AgentTestCase):
+                         mock_exit.assert_called_once_with(logcollector.INVALID_CGROUPS_ERRCODE)
+                         self.assertEqual(exit_error, re)
+         finally:
+-            CollectLogsHandler.disable_cgroups_validation()
++            CollectLogsHandler.disable_monitor_cgroups_check()
+         
+     def test_it_should_parse_setup_firewall_properly(self):
+ 
+-- 
+2.39.3
+

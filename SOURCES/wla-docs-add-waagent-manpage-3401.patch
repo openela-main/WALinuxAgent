@@ -1,0 +1,202 @@
+From 756fe22f41c0607394a9b9ba20c15677b3389a21 Mon Sep 17 00:00:00 2001
+From: Li Tian <94442129+litian1992@users.noreply.github.com>
+Date: Tue, 5 Aug 2025 03:18:10 +0800
+Subject: [PATCH] docs: add waagent manpage (#3401)
+
+RH-Author: Li Tian <None>
+RH-MergeRequest: 22: redhat: docs: add waagent manpage (RHEL-9) (#3401)
+RH-Jira: RHEL-109496
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Jon Maloy <jmaloy@redhat.com>
+RH-Commit: [1/1] a6c0303463f4cd9362d7276119cc81ebe74490ac (litian1/WALinuxAgent)
+
+* docs: add waagent manpage
+
+Add also man page handler in setup.py
+
+---------
+
+Signed-off-by: Li Tian <litian@redhat.com>
+Co-authored-by: maddieford <93676569+maddieford@users.noreply.github.com>
+(cherry picked from commit 7f9b5568b6572745b7d0776de0ff6fb70a28dba0)
+Signed-off-by: Li Tian <litian@redhat.com>
+---
+ .distro/WALinuxAgent.spec |   1 +
+ doc/man/waagent.1         | 117 ++++++++++++++++++++++++++++++++++++++
+ setup.py                  |  14 +++++
+ 3 files changed, 132 insertions(+)
+ create mode 100644 doc/man/waagent.1
+
+diff --git a/doc/man/waagent.1 b/doc/man/waagent.1
+new file mode 100644
+index 00000000..b1d8e9eb
+--- /dev/null
++++ b/doc/man/waagent.1
+@@ -0,0 +1,117 @@
++.TH WAAGENT 1 "June 2025" "Azure Linux Agent" "System Administration"
++.SH NAME
++waagent \- Azure Linux VM Agent
++.SH SYNOPSIS
++.B waagent
++[-verbose] [-force] [-help] [\fISUBCOMMAND\fR]...
++
++.SH DESCRIPTION
++The Azure Linux Agent (waagent) manages virtual machine interaction with the Azure fabric controller.
++
++Most subcommands are not meant to be run directly by the user. However, some subcommands may be useful for debugging (such as collect-logs, version, and show-configuration) and deprovisioning.
++
++.SH SUBCOMMANDS
++.TP
++\fB-collect-logs\fR
++Runs the log collector utility that collects relevant agent logs for debugging and stores them in the agent folder on disk. Exact location will be shown when run. Use flag \fB-full\fR for more exhaustive log collection.
++
++.TP
++\fB-configuration-path FILE\fR
++Used together with \fB-start\fR or \fB-daemon\fR to specify configuration file. Default to /etc/waagent.conf.
++
++.TP
++\fB-daemon -start\fR
++Run waagent as a daemon in background.
++
++.TP
++\fB-deprovision\fR
++Attempt to clean the system and make it suitable for re-provisioning. WARNING: Deprovision does not guarantee that the image is cleared of all sensitive information and suitable for redistribution.
++
++.TP
++\fB-deprovision+user\fR
++Same as \fB-deprovision\fR, but also removes the last provisioned user account.
++
++.TP
++\fB-register-service\fR
++Register waagent as a service and enable it.
++
++.TP
++\fB-run-exthandlers\fR
++Run check for updates to waagent and extension handler. Note that outputs to /dev/console will be temporarily suspended.
++
++.TP
++\fB-setup-firewall=IP\fR
++Set up firewall rules for endpoint \fBIP\fR.
++
++.TP
++\fB-show-configuration\fR
++Print the current configuration, including values read from waagent.conf.
++
++.TP
++\fB-help\fR
++Display usage information.
++
++.TP
++\fB-version\fR
++Show the current version of the agent.
++
++.SH CONFIGURATION
++The agent is configured via this file by default:
++
++.B /etc/waagent.conf
++
++This file contains key=value settings that control agent behavior, including provisioning, disk formatting, resource limits, and certificate handling.
++
++Example entries:
++.RS
++Provisioning.Enabled=y
++ResourceDisk.Format=y
++ResourceDisk.MountPoint=/mnt/resource
++RSA.KeyLength=2048
++Logs.Verbose=y
++.RE
++
++.SH FILES AND DIRECTORIES
++.TP
++\fB/etc/waagent.conf\fR
++Main configuration file.
++
++.TP
++\fB/var/lib/waagent\fR
++State files and provisioning artifacts.
++
++.TP
++\fB/var/log/waagent.log\fR
++Agent log file.
++
++.SH SERVICES
++On systemd systems, the agent runs as:
++.RS
++.B systemctl start <waagent.service|walinuxagent.service>
++.B systemctl enable <waagent.service|walinuxagent.service>
++.RE
++
++.SH EXIT STATUS
++Zero on success, non-zero on error.
++
++.SH EXAMPLES
++.TP
++Deprovision before capturing an image:
++.RS
++waagent -deprovision+user && rm -rf /var/lib/waagent && shutdown -h now
++.RE
++
++.SH SEE ALSO
++.BR systemctl (1),
++.BR cloud-init (1)
++
++.SH HOMEPAGE
++.B https://github.com/Azure/WALinuxAgent
++
++.B https://learn.microsoft.com/en-us/azure/virtual-machines/extensions/agent-linux
++
++.SH COPYRIGHT
++Copyright 2018 Microsoft Corporation
++
++.SH AUTHORS
++Microsoft Azure Linux Team
+diff --git a/setup.py b/setup.py
+index cf6e90b5..9ed135fb 100755
+--- a/setup.py
++++ b/setup.py
+@@ -17,7 +17,9 @@
+ # limitations under the License.
+ #
+ 
++import gzip
+ import os
++import shutil
+ import subprocess
+ import sys
+ 
+@@ -87,6 +89,16 @@ def set_udev_files(data_files, dest="/etc/udev/rules.d/", src=None):
+                "config/99-azure-product-uuid.rules"]
+     data_files.append((dest, src))
+ 
++def set_man_files(data_files, dest="/usr/share/man/man1", src=None):
++    if src is None:
++        src = ["doc/man/waagent.1"]
++    src_gz = []
++    for file in src:
++        with open(file, 'rb') as f_in, gzip.open(file+".gz", 'wb') as f_out:
++            shutil.copyfileobj(f_in, f_out)
++        src_gz.append(file+".gz")
++    data_files.append((dest, src_gz))
++
+ 
+ def get_data_files(name, version, fullname):  # pylint: disable=R0912
+     """
+@@ -107,6 +119,7 @@ def get_data_files(name, version, fullname):  # pylint: disable=R0912
+         set_conf_files(data_files)
+         set_logrotate_files(data_files)
+         set_udev_files(data_files)
++        set_man_files(data_files)
+         if version.startswith("8") or version.startswith("9"):
+             # redhat 8+ uses systemd and python3
+             set_systemd_files(data_files, dest=systemd_dir_path,
+@@ -255,6 +268,7 @@ def get_data_files(name, version, fullname):  # pylint: disable=R0912
+         set_logrotate_files(data_files)
+         set_udev_files(data_files)
+         set_systemd_files(data_files, dest=systemd_dir_path)
++        set_man_files(data_files)
+     else:
+         # Use default setting
+         set_bin_files(data_files, dest=agent_bin_path)
+-- 
+2.50.1
+

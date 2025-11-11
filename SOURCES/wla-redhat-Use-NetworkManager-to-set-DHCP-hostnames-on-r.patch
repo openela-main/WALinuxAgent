@@ -1,8 +1,8 @@
-From b85814d5683c7f8a1e1b5f3570bcce0a8f76137b Mon Sep 17 00:00:00 2001
+From 8ac14e61d8067bd8b4e60c59b35b4a4227f8a242 Mon Sep 17 00:00:00 2001
 From: Mohammed Gamal <mgamal@redhat.com>
 Date: Fri, 29 Jul 2022 13:07:13 +0200
-Subject: [PATCH 1/2] redhat: Use NetworkManager to set DHCP hostnames on
- recent RHEL distros
+Subject: redhat: Use NetworkManager to set DHCP hostnames on recent RHEL
+ distros
 
 RH-Author: Mohamed Gamal Morsy <mmorsy@redhat.com>
 RH-MergeRequest: 3: redhat: Use NetworkManager to set DHCP hostnames on recent RHEL distros
@@ -20,18 +20,22 @@ stored in /etc/sysconfig/ifcfg-{interface}.
 Fix this for setting DHCP hostnames in those RHEL versions.
 
 Signed-off-by: Mohammed Gamal <mgamal@redhat.com>
+
+Patch-name: wla-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.patch
+Patch-id:
+Patch-present-in-specfile: True
 ---
  azurelinuxagent/common/osutil/redhat.py | 12 ++++++++++++
  1 file changed, 12 insertions(+)
 
 diff --git a/azurelinuxagent/common/osutil/redhat.py b/azurelinuxagent/common/osutil/redhat.py
-index 5c397ae8..7dd36add 100644
+index a9a10347..b85b2d42 100644
 --- a/azurelinuxagent/common/osutil/redhat.py
 +++ b/azurelinuxagent/common/osutil/redhat.py
-@@ -158,3 +158,15 @@ class RedhatOSUtil(Redhat6xOSUtil):
-                 time.sleep(wait)
-             else:
-                 logger.warn("exceeded restart retries")
+@@ -272,3 +272,15 @@ class RedhatOSModernUtil(RedhatOSUtil):
+         # NetworkManager restart in RedhatOSModernUtil because the issue was not reproduced on these versions.
+         shellutil.run("service NetworkManager restart")
+         DefaultOSUtil.publish_hostname(self, hostname)
 +
 +    def set_dhcp_hostname(self, hostname):
 +        """
@@ -45,5 +49,5 @@ index 5c397ae8..7dd36add 100644
 +        if return_code != 0:
 +            logger.error("failed to set DHCP hostname for interface {0}: return code {1}".format(ifname, return_code))
 -- 
-2.31.1
+2.39.3
 

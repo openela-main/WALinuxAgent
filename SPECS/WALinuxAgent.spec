@@ -3,8 +3,8 @@
 %global dracut_modname_cvm 97walinuxagentcvm
 
 Name:                 WALinuxAgent
-Version:              2.7.0.6
-Release:              11%{?dist}.1.openela.0
+Version:              2.13.1.1
+Release:              3%{?dist}.openela.0
 Summary:              The Microsoft Azure Linux Agent
 
 License:              ASL 2.0
@@ -15,22 +15,17 @@ Source2:              module-setup-cvm.sh
 Source3:              90-tpm2-import.rules
 Source4:              tpm2-luks-import.sh
 
-# Python3.9 fixes
-Patch0001:            0001-Initial-redhat-build-configuation.patch
-Patch0002:            0002-Implement-restart_if-for-RedHat-OS.patch
-# For bz#2098233 - [Azure][WALA][RHEL-9] [9.1] walinuxagent kills network during boot
-Patch3:               wla-redhat-Fix-command-sequence-for-restarting-net-inter.patch
 # For bz#2114830 - [Azure][WALA][RHEL-9.1] Provisioning failed if no ifcfg-eth0
-Patch4:               wla-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.patch
-# For bz#2093965 - [Azure][WALA][RHEL-9] The description of "Logs.Collect" is incorrect
-Patch5:               wla-Update-Log-Collector-default-in-Comments-and-Readme-.patch
+Patch0001:            wla-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.patch
 # For RHEL-7273 - [Azure][WALA] Consider to disable Log collector
-Patch6:               wla-Disable-automatic-log-collector.patch
+Patch0002:            wla-Disable-automatic-log-collector.patch
 # For RHEL-5880 - [Azure][RHEL-9]68-azure-sriov-nm-unmanaged.rules cannot stop NetworkManager-wait-online.service checking SRIOV interface
-Patch7:               wla-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch
-Patch8:               9999-add-openela-temporarily.patch
-
-# Source-git patches
+Patch0003:            wla-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch
+# For RHEL-109496 - [Azure][WALA][RHEL-9] Missing man page
+Patch4:               wla-docs-add-waagent-manpage-3401.patch
+# For RHEL-97572 - [Azure][RHEL-9][WALA][Image mode] Cannot find 'service' command
+Patch5:               wla-Use-systemctl-instead-of-service-to-manager-services.patch
+Patch6:               9999-add-openela-temporarily.patch
 
 BuildArch:            noarch
 
@@ -134,6 +129,7 @@ rm -rf %{_unitdir}/waagent.service.d/
 
 %files
 %doc LICENSE.txt NOTICE README.md
+%{_mandir}/man1/waagent.1.gz
 %ghost %{_localstatedir}/log/waagent.log
 %ghost %{_unitdir}/waagent-network-setup.service
 %dir %attr(0700, root, root) %{_sharedstatedir}/waagent
@@ -165,13 +161,33 @@ rm -rf %{_unitdir}/waagent.service.d/
 %endif
 
 %changelog
-* Tue Aug 05 2025 Release Engineering <releng@openela.org> - 2.7.0.6.openela.0
+* Tue Nov 11 2025 Release Engineering <releng@openela.org> - 2.13.1.1.openela.0
 - Backport OpenELA temporarily
 
-* Tue May 06 2025 Jon Maloy <jmaloy@redhat.com> - 2.7.0.6-11.el9_6.1
-- wla-redhat-Include-10-azure-unmanaged-sriov.rules-into-i.patch [RHEL-88808]
-- Resolves: RHEL-88808
-  ([Azure][ARM][RHEL-9] Kdump cannot save vmcore via ssh or nfs [rhel-9.6.z])
+* Thu Aug 21 2025 Jon Maloy <jmaloy@redhat.com> - 2.13.1.1-3
+- wla-Use-systemctl-instead-of-service-to-manager-services.patch [RHEL-97572]
+- Resolves: RHEL-97572
+  ([Azure][RHEL-9][WALA][Image mode] Cannot find 'service' command)
+
+* Thu Aug 21 2025 Jon Maloy <jmaloy@redhat.com> - 2.13.1.1-2
+- wla-docs-add-waagent-manpage-3401.patch [RHEL-109496]
+- Resolves: RHEL-109496
+  ([Azure][WALA][RHEL-9] Missing man page)
+
+* Thu May 22 2025 Vitaly Kuznetsov <vkuznets@redhat.com> - 2.13.1.1-1
+* Rebase to 2.13.1.1 [RHEL-91090]
+- Resolves: RHEL-91090
+  (Rebase to v2.13.1.1 [rhel-9])
+
+* Fri Apr 11 2025 Jon Maloy <jmaloy@redhat.com> - 2.7.0.6-13
+- wla-redhat-Include-10-azure-unmanaged-sriov.rules-into-i.patch [RHEL-40957]
+- Resolves: RHEL-40957
+  ([Azure][ARM][RHEL-9] Kdump cannot save vmcore via ssh or nfs)
+
+* Wed Apr 02 2025 Jon Maloy <jmaloy@redhat.com> - 2.7.0.6-12
+- wla-redhat-Include-10-azure-unmanaged-sriov.rules-into-i.patch [RHEL-40957]
+- Resolves: RHEL-40957
+  ([Azure][ARM][RHEL-9] Kdump cannot save vmcore via ssh or nfs)
 
 * Fri Jan 17 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.7.0.6-11
 - wla-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch [RHEL-5880]

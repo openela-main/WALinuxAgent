@@ -1,7 +1,7 @@
-From 7841f8f9c4a76fc3519202a9c6bebf9697a08e19 Mon Sep 17 00:00:00 2001
+From c8df88fd1fedb25727fff64ecc5dde1a59d7a976 Mon Sep 17 00:00:00 2001
 From: Vitaly Kuznetsov <vkuznets@redhat.com>
 Date: Mon, 6 Jan 2025 17:13:11 +0100
-Subject: [PATCH] redhat: Add a udev rule to avoid managing slave NICs with
+Subject: redhat: Add a udev rule to avoid managing slave NICs with
  NetworkManager
 
 RH-Author: Vitaly Kuznetsov <vkuznets@redhat.com>
@@ -17,6 +17,10 @@ eventually. For the time being, just put the required udev rule into
 WALinuxAgent package.
 
 Signed-off-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+
+Patch-name: wla-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch
+Patch-id:
+Patch-present-in-specfile: True
 ---
  .distro/WALinuxAgent.spec             | 1 +
  config/10-azure-unmanaged-sriov.rules | 6 ++++++
@@ -37,7 +41,7 @@ index 00000000..7eefcb26
 +#   NM_UNMANAGED=1 for NetworkManager
 +SUBSYSTEM=="net", ACTION!="remove", DRIVERS=="mana|mlx4_core|mlx5_core", ATTR{flags}=="0x?[89ABCDEF]??", ENV{AZURE_UNMANAGED_SRIOV}="1", ENV{ID_NET_MANAGED_BY}="unmanaged", ENV{NM_UNMANAGED}="1"
 diff --git a/setup.py b/setup.py
-index e4d7cf7e..ab75563e 100755
+index e83f5989..cf6e90b5 100755
 --- a/setup.py
 +++ b/setup.py
 @@ -82,7 +82,8 @@ def set_openbsd_rc_files(data_files, dest="/etc/rc.d/", src=None):

@@ -1,7 +1,7 @@
-From 21616a198bee14a9a95a6dacedcd1b1eca175fc6 Mon Sep 17 00:00:00 2001
+From 92baa5663a0baa45e37243936221b0c1795ff324 Mon Sep 17 00:00:00 2001
 From: Ani Sinha <anisinha@redhat.com>
 Date: Mon, 6 May 2024 11:50:49 +0530
-Subject: [PATCH] Disable automatic log collector
+Subject: Disable automatic log collector
 
 RH-Author: Ani Sinha <anisinha@redhat.com>
 RH-MergeRequest: 11: Disable automatic log collector
@@ -17,15 +17,19 @@ Jira: https://issues.redhat.com/browse/RHEL-7273
 Upstream: RHEL only.
 
 Signed-off-by: Ani Sinha <anisinha@redhat.com>
+
+Patch-name: wla-Disable-automatic-log-collector.patch
+Patch-id:
+Patch-present-in-specfile: True
 ---
  config/waagent.conf | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/config/waagent.conf b/config/waagent.conf
-index 14cd01c8..25ee83d3 100644
+index 3c9ad5d4..62d8148e 100644
 --- a/config/waagent.conf
 +++ b/config/waagent.conf
-@@ -73,7 +73,7 @@ Logs.Verbose=n
+@@ -70,7 +70,7 @@ Logs.Verbose=n
  # Logs.Console=y
  
  # Enable periodic log collection, default is y

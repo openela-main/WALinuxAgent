@@ -1,4 +1,4 @@
-From dac5101c56b59dbb14d96d4344d6cb2ac047b392 Mon Sep 17 00:00:00 2001
+From 2d78c9ebaba4742390e92dc5994391949b90ec4c Mon Sep 17 00:00:00 2001
 From: Chris Patterson <cpatterson@microsoft.com>
 Date: Thu, 1 Sep 2022 10:45:47 -0400
 Subject: [PATCH] waagent.service: set ConditionVirtualization=|microsoft
@@ -10,10 +10,10 @@ test setups to add another condition (i.e. run outside of hyperv).
 
 Signed-off-by: Chris Patterson <cpatterson@microsoft.com>
 ---
- bin/waagent2.0                   | 1 +
- init/redhat/py2/waagent.service  | 1 +
- init/redhat/waagent.service      | 1 +
- init/waagent.service             | 1 +
+ bin/waagent2.0                  | 1 +
+ init/redhat/py2/waagent.service | 1 +
+ init/redhat/waagent.service     | 1 +
+ init/waagent.service            | 1 +
  4 files changed, 4 insertions(+)
 
 diff --git a/bin/waagent2.0 b/bin/waagent2.0
@@ -29,7 +29,7 @@ index 34732677..c84c8c40 100644
  [Service]
  Type=simple
 diff --git a/init/redhat/py2/waagent.service b/init/redhat/py2/waagent.service
-index c6d15420..132e7027 100644
+index 920e0ec7..46254ec3 100644
 --- a/init/redhat/py2/waagent.service
 +++ b/init/redhat/py2/waagent.service
 @@ -5,6 +5,7 @@ After=network-online.target
@@ -41,7 +41,7 @@ index c6d15420..132e7027 100644
  [Service]
  Type=simple
 diff --git a/init/redhat/waagent.service b/init/redhat/waagent.service
-index dc11fbb1..7c93b101 100644
+index 2c6ac5d8..12d5feee 100644
 --- a/init/redhat/waagent.service
 +++ b/init/redhat/waagent.service
 @@ -5,6 +5,7 @@ After=network-online.target
@@ -64,6 +64,3 @@ index e91f1433..aa1f3203 100644
  
  [Service]
  Type=simple
--- 
-2.37.3
-

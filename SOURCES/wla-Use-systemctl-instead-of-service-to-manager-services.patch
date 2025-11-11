@@ -1,0 +1,54 @@
+From 93376d3c37882f246c51843ff1b327600f074f81 Mon Sep 17 00:00:00 2001
+From: Yuxin Sun <yuxisun@redhat.com>
+Date: Fri, 27 Jun 2025 01:34:20 +0800
+Subject: [PATCH 1/2] Use systemctl instead of service to manager services in
+ new RHEL versions (#3403)
+
+RH-Author: yuxisun <None>
+RH-MergeRequest: 20: Use systemctl instead of service to manager services in new RHEL versions (#3403)
+RH-Jira: RHEL-109465
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Commit: [1/1] 95bb66dad7fda08c89a88ca347e55ec18f75d8e8 (yuxisun/WALinuxAgent-src)
+
+Signed-off-by: Yuxin Sun <yuxisun@redhat.com>
+(cherry picked from commit a6cfdfdc3e04884a08cd6dd20fa035b687943fe9)
+---
+ azurelinuxagent/common/osutil/redhat.py | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/azurelinuxagent/common/osutil/redhat.py b/azurelinuxagent/common/osutil/redhat.py
+index b85b2d42..cf2d2f78 100644
+--- a/azurelinuxagent/common/osutil/redhat.py
++++ b/azurelinuxagent/common/osutil/redhat.py
+@@ -245,6 +245,18 @@ class RedhatOSModernUtil(RedhatOSUtil):
+     def __init__(self):  # pylint: disable=W0235
+         super(RedhatOSModernUtil, self).__init__()
+ 
++    def restart_ssh_service(self):
++        return shellutil.run("systemctl condrestart sshd", chk_err=False)
++
++    def stop_agent_service(self):
++        return shellutil.run("systemctl stop {0}".format(self.service_name), chk_err=False)
++
++    def start_agent_service(self):
++        return shellutil.run("systemctl start {0}".format(self.service_name), chk_err=False)
++
++    def restart_network_manager(self):
++        shellutil.run("systemctl restart NetworkManager")
++
+     def restart_if(self, ifname, retries=3, wait=5):
+         """
+         Restart an interface by bouncing the link. systemd-networkd observes
+@@ -270,7 +282,7 @@ class RedhatOSModernUtil(RedhatOSUtil):
+         # RedhatOSUtil was updated to conditionally run NetworkManager restart in response to a race condition between
+         # NetworkManager restart and the agent restarting the network interface during publish_hostname. Keeping the
+         # NetworkManager restart in RedhatOSModernUtil because the issue was not reproduced on these versions.
+-        shellutil.run("service NetworkManager restart")
++        self.restart_network_manager()
+         DefaultOSUtil.publish_hostname(self, hostname)
+ 
+     def set_dhcp_hostname(self, hostname):
+-- 
+2.39.3
+

@@ -2,24 +2,22 @@
 %global dracut_modname 97walinuxagent
 
 Name:           WALinuxAgent
-Version:        2.9.1.1
-Release:        9%{?dist}.1
+Version:        2.13.1.1
+Release:        2%{?dist}
 Summary:        The Microsoft Azure Linux Agent
 
 License:        Apache-2.0
 URL:            https://github.com/Azure/%{name}
 Source0:        https://github.com/Azure/%{name}/archive/v%{version}.tar.gz
 Source1:        module-setup.sh
-
-Patch1:         0001-waagent.service-set-ConditionVirtualization-microsof.patch
-# For RHEL-35963 - [Azure][WALA] Consider to disable Log collector [rhel-10]
-Patch2: wla-Disable-automatic-log-collector.patch
-# For RHEL-40966 - [Azure][WALA][RHEL-10] Provisioning failed if no ifcfg-eth0
-Patch3: wla-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.patch
-# For RHEL-46713 - [Azure][RHEL-10][WALA] waagent -collect-logs doesn't work and the log is confusing
-Patch4: wla-skip-cgorup-monitor-2939.patch
-# For RHEL-68796 - Please add `mana` to 99-azure-unmanaged-devices.conf of Azure image
-Patch5: wla-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch
+Patch1: 0001-waagent.service-set-ConditionVirtualization-microsof.patch
+Patch2: 0002-Disable-automatic-log-collector.patch
+Patch3: 0003-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.patch
+Patch4: 0004-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch
+# For RHEL-109465 - [Azure][RHEL-10][WALA][Image mode] Cannot find 'service' command
+Patch5: wla-Use-systemctl-instead-of-service-to-manager-services.patch
+# For RHEL-96792 - [Azure][WALA][RHEL-10] Missing man page
+Patch6: wla-docs-add-waagent-manpage-3401.patch
 
 BuildArch:      noarch
 
@@ -109,6 +107,7 @@ rm -rf %{_unitdir}/waagent.service.d/
 
 %files
 %doc LICENSE.txt NOTICE README.md
+%{_mandir}/man1/waagent.1.gz
 %ghost %{_localstatedir}/log/waagent.log
 %ghost %{_unitdir}/waagent-network-setup.service
 %dir %attr(0700, root, root) %{_sharedstatedir}/waagent
@@ -131,11 +130,24 @@ rm -rf %{_unitdir}/waagent.service.d/
 %endif
 
 %changelog
-* Mon Apr 28 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.9.1.1-9.el10_0.1
-- wla-redhat-Explicitly-list-udev-rule-requirements-in-the.patch [RHEL-87782]
-- wla-redhat-Include-10-azure-unmanaged-sriov.rules-into-i.patch [RHEL-87782]
-- Resolves: RHEL-87782
-  ([Azure][ARM][RHEL-9] Kdump cannot save vmcore via ssh or nfs [rhel-10.0.z])
+* Thu Aug 21 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.13.1.1-2
+- wla-Use-systemctl-instead-of-service-to-manager-services.patch [RHEL-109465]
+- wla-docs-add-waagent-manpage-3401.patch [RHEL-96792]
+- Resolves: RHEL-109465
+  ([Azure][RHEL-10][WALA][Image mode] Cannot find 'service' command)
+- Resolves: RHEL-96792
+  ([Azure][WALA][RHEL-10] Missing man page)
+
+* Thu May 22 2025 Vitaly Kuznetsov <vkuznets@redhat.com> - 2.13.1.1-1
+- Rebase to 2.13.1.1 [RHEL-86509]
+- Resolves: RHEL-86509
+  (Rebase to v2.13.1.1)
+
+* Tue Mar 25 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.9.1.1-10
+- wla-redhat-Explicitly-list-udev-rule-requirements-in-the.patch [RHEL-84073]
+- wla-redhat-Include-10-azure-unmanaged-sriov.rules-into-i.patch [RHEL-84073]
+- Resolves: RHEL-84073
+  ([Azure][ARM][RHEL-9] Kdump cannot save vmcore via ssh or nfs [rhel-10])
 
 * Mon Jan 13 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.9.1.1-9
 - wla-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch [RHEL-68796]

@@ -3,7 +3,7 @@
 
 Name:           WALinuxAgent
 Version:        2.13.1.1
-Release:        2%{?dist}
+Release:        2%{?dist}.1
 Summary:        The Microsoft Azure Linux Agent
 
 License:        Apache-2.0
@@ -18,6 +18,8 @@ Patch4: 0004-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch
 Patch5: wla-Use-systemctl-instead-of-service-to-manager-services.patch
 # For RHEL-96792 - [Azure][WALA][RHEL-10] Missing man page
 Patch6: wla-docs-add-waagent-manpage-3401.patch
+# For RHEL-129954 - Update walagent to 2.14 to support FIPS 140-3 on Azure [rhel-10.1.z]
+Patch7: wla-Jira-https-issues.redhat.com-browse-RHEL-129954.patch
 
 BuildArch:      noarch
 
@@ -130,6 +132,11 @@ rm -rf %{_unitdir}/waagent.service.d/
 %endif
 
 %changelog
+* Fri Nov 28 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.13.1.1-2.el10_1.1
+- wla-Jira-https-issues.redhat.com-browse-RHEL-129954.patch [RHEL-129954]
+- Resolves: RHEL-129954
+  (Update walagent to 2.14 to support FIPS 140-3 on Azure [rhel-10.1.z])
+
 * Thu Aug 21 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.13.1.1-2
 - wla-Use-systemctl-instead-of-service-to-manager-services.patch [RHEL-109465]
 - wla-docs-add-waagent-manpage-3401.patch [RHEL-96792]

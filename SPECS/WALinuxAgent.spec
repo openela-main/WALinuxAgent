@@ -4,7 +4,7 @@
 
 Name:                 WALinuxAgent
 Version:              2.13.1.1
-Release:              3%{?dist}.openela.0
+Release:              3%{?dist}.1.openela.0
 Summary:              The Microsoft Azure Linux Agent
 
 License:              ASL 2.0
@@ -25,7 +25,9 @@ Patch0003:            wla-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.p
 Patch4:               wla-docs-add-waagent-manpage-3401.patch
 # For RHEL-97572 - [Azure][RHEL-9][WALA][Image mode] Cannot find 'service' command
 Patch5:               wla-Use-systemctl-instead-of-service-to-manager-services.patch
-Patch6:               9999-add-openela-temporarily.patch
+# For RHEL-124949 - Update walagent to 2.14 to support FIPS 140-3 on Azure [rhel-9.7.z]
+Patch6:               wla-Support-for-FIPS-140-3-3324.patch
+Patch7:               9999-add-openela-temporarily.patch
 
 BuildArch:            noarch
 
@@ -161,8 +163,13 @@ rm -rf %{_unitdir}/waagent.service.d/
 %endif
 
 %changelog
-* Tue Nov 11 2025 Release Engineering <releng@openela.org> - 2.13.1.1.openela.0
+* Tue Jan 27 2026 Release Engineering <releng@openela.org> - 2.13.1.1.openela.0
 - Backport OpenELA temporarily
+
+* Tue Dec 02 2025 Jon Maloy <jmaloy@redhat.com> - 2.13.1.1-3.el9_7.1
+- wla-Support-for-FIPS-140-3-3324.patch [RHEL-124949]
+- Resolves: RHEL-124949
+  (Update walagent to 2.14 to support FIPS 140-3 on Azure [rhel-9.7.z])
 
 * Thu Aug 21 2025 Jon Maloy <jmaloy@redhat.com> - 2.13.1.1-3
 - wla-Use-systemctl-instead-of-service-to-manager-services.patch [RHEL-97572]

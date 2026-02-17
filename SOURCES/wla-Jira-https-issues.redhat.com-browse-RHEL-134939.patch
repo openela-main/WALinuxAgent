@@ -1,0 +1,83 @@
+From cbf30e0eebbedc5242d03f53d355113a53209635 Mon Sep 17 00:00:00 2001
+From: Chris Patterson <cpatterson@microsoft.com>
+Date: Thu, 1 Sep 2022 10:45:47 -0400
+Subject: [PATCH] Jira: https://issues.redhat.com/browse/RHEL-134939
+
+RH-Author: yuxisun <None>
+RH-MergeRequest: 25: waagent.service: set ConditionVirtualization=|microsoft
+RH-Jira: RHEL-134939
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [1/1] 95d939cb838949a4509bd9415873fbdc7e7191f3
+
+waagent.service: set ConditionVirtualization=|microsoft
+
+Only start waagent service when running under Microsoft virtualization.
+
+Set it as a triggering condition to make it easier for downstreams or
+test setups to add another condition (i.e. run outside of hyperv).
+
+Signed-off-by: Chris Patterson <cpatterson@microsoft.com>
+(cherry picked from commit 2d78c9ebaba4742390e92dc5994391949b90ec4c)
+
+Downstream only
+
+Signed-off-by: Yuxin Sun <yuxisun@redhat.com>
+---
+ bin/waagent2.0                  | 1 +
+ init/redhat/py2/waagent.service | 1 +
+ init/redhat/waagent.service     | 1 +
+ init/waagent.service            | 1 +
+ 4 files changed, 4 insertions(+)
+
+diff --git a/bin/waagent2.0 b/bin/waagent2.0
+index 34732677..c84c8c40 100644
+--- a/bin/waagent2.0
++++ b/bin/waagent2.0
+@@ -1569,6 +1569,7 @@ After=network.target
+ After=sshd.service
+ ConditionFileIsExecutable=/usr/sbin/waagent
+ ConditionPathExists=/etc/waagent.conf
++ConditionVirtualization=|microsoft
+ 
+ [Service]
+ Type=simple
+diff --git a/init/redhat/py2/waagent.service b/init/redhat/py2/waagent.service
+index 920e0ec7..46254ec3 100644
+--- a/init/redhat/py2/waagent.service
++++ b/init/redhat/py2/waagent.service
+@@ -5,6 +5,7 @@ After=network-online.target
+ 
+ ConditionFileIsExecutable=/usr/sbin/waagent
+ ConditionPathExists=/etc/waagent.conf
++ConditionVirtualization=|microsoft
+ 
+ [Service]
+ Type=simple
+diff --git a/init/redhat/waagent.service b/init/redhat/waagent.service
+index 2c6ac5d8..12d5feee 100644
+--- a/init/redhat/waagent.service
++++ b/init/redhat/waagent.service
+@@ -5,6 +5,7 @@ After=network-online.target
+ 
+ ConditionFileIsExecutable=/usr/sbin/waagent
+ ConditionPathExists=/etc/waagent.conf
++ConditionVirtualization=|microsoft
+ 
+ [Service]
+ Type=simple
+diff --git a/init/waagent.service b/init/waagent.service
+index e91f1433..aa1f3203 100644
+--- a/init/waagent.service
++++ b/init/waagent.service
+@@ -5,6 +5,7 @@ After=network-online.target
+ 
+ ConditionFileIsExecutable=/usr/sbin/waagent
+ ConditionPathExists=/etc/waagent.conf
++ConditionVirtualization=|microsoft
+ 
+ [Service]
+ Type=simple
+-- 
+2.52.0
+

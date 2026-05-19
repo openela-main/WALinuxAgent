@@ -1,4 +1,4 @@
-From 2d78c9ebaba4742390e92dc5994391949b90ec4c Mon Sep 17 00:00:00 2001
+From ec6ca69785a4a9184ac5818921ab4e87dfa5b220 Mon Sep 17 00:00:00 2001
 From: Chris Patterson <cpatterson@microsoft.com>
 Date: Thu, 1 Sep 2022 10:45:47 -0400
 Subject: [PATCH] waagent.service: set ConditionVirtualization=|microsoft

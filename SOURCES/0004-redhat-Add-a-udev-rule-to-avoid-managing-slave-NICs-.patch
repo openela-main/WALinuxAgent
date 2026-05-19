@@ -1,4 +1,4 @@
-From c17811fbdb131a4cca41a847e8b666f432dbe4a8 Mon Sep 17 00:00:00 2001
+From fe3820b9ef6fa94c75d13d8124b6a2bb40122036 Mon Sep 17 00:00:00 2001
 From: Vitaly Kuznetsov <vkuznets@redhat.com>
 Date: Mon, 6 Jan 2025 17:13:11 +0100
 Subject: [PATCH] redhat: Add a udev rule to avoid managing slave NICs with
@@ -41,7 +41,7 @@ index 00000000..7eefcb26
 +#   NM_UNMANAGED=1 for NetworkManager
 +SUBSYSTEM=="net", ACTION!="remove", DRIVERS=="mana|mlx4_core|mlx5_core", ATTR{flags}=="0x?[89ABCDEF]??", ENV{AZURE_UNMANAGED_SRIOV}="1", ENV{ID_NET_MANAGED_BY}="unmanaged", ENV{NM_UNMANAGED}="1"
 diff --git a/setup.py b/setup.py
-index e83f5989..cf6e90b5 100755
+index ca5e2d20..6471dba3 100755
 --- a/setup.py
 +++ b/setup.py
 @@ -82,7 +82,8 @@ def set_openbsd_rc_files(data_files, dest="/etc/rc.d/", src=None):

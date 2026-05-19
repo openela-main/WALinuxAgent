@@ -1,4 +1,4 @@
-From cb221e0885f794e0ec302cbb77bff927a8d4458a Mon Sep 17 00:00:00 2001
+From c2242f64eb9cbfacbfb149d0cfa057618b22c8eb Mon Sep 17 00:00:00 2001
 From: Ani Sinha <anisinha@redhat.com>
 Date: Mon, 6 May 2024 11:50:49 +0530
 Subject: [PATCH] Disable automatic log collector

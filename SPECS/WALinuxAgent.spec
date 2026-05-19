@@ -2,8 +2,8 @@
 %global dracut_modname 97walinuxagent
 
 Name:           WALinuxAgent
-Version:        2.13.1.1
-Release:        2%{?dist}.1
+Version:        2.14.0.1
+Release:        3%{?dist}
 Summary:        The Microsoft Azure Linux Agent
 
 License:        Apache-2.0
@@ -14,12 +14,12 @@ Patch1: 0001-waagent.service-set-ConditionVirtualization-microsof.patch
 Patch2: 0002-Disable-automatic-log-collector.patch
 Patch3: 0003-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.patch
 Patch4: 0004-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch
-# For RHEL-109465 - [Azure][RHEL-10][WALA][Image mode] Cannot find 'service' command
-Patch5: wla-Use-systemctl-instead-of-service-to-manager-services.patch
-# For RHEL-96792 - [Azure][WALA][RHEL-10] Missing man page
-Patch6: wla-docs-add-waagent-manpage-3401.patch
-# For RHEL-129954 - Update walagent to 2.14 to support FIPS 140-3 on Azure [rhel-10.1.z]
-Patch7: wla-Jira-https-issues.redhat.com-browse-RHEL-129954.patch
+Patch5: 0005-Use-systemctl-instead-of-service-to-manager-services.patch
+Patch6: 0006-docs-add-waagent-manpage-3401.patch
+# For RHEL-114155 - [Azure][WALA][RHEL-10] Remove 10-azure-unmanaged-sriov.rules
+Patch7: wla-Remove-the-10-azure-unmanaged-sriov.rules-to-avoid-c.patch
+# For RHEL-82243 - [Azure][image mode][WALA][RHEL-10] Unable to setup the persistent firewall rules
+Patch8: wla-Change-redhat-waagent-network-setup.service-path-to-.patch
 
 BuildArch:      noarch
 
@@ -36,6 +36,7 @@ Requires:       openssl
 Requires:       parted
 Requires:       python3-pyasn1
 Requires:       iptables
+Requires:       azure-vm-utils >= 0.7.0-1
 
 BuildRequires:   systemd
 Requires(post):  systemd
@@ -132,10 +133,20 @@ rm -rf %{_unitdir}/waagent.service.d/
 %endif
 
 %changelog
-* Fri Nov 28 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.13.1.1-2.el10_1.1
-- wla-Jira-https-issues.redhat.com-browse-RHEL-129954.patch [RHEL-129954]
-- Resolves: RHEL-129954
-  (Update walagent to 2.14 to support FIPS 140-3 on Azure [rhel-10.1.z])
+* Mon Jan 19 2026 Miroslav Rezanina <mrezanin@redhat.com> - 2.14.0.1-3
+- wla-Change-redhat-waagent-network-setup.service-path-to-.patch [RHEL-82243]
+- Resolves: RHEL-82243
+  ([Azure][image mode][WALA][RHEL-10] Unable to setup the persistent firewall rules)
+
+* Mon Nov 03 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.14.0.1-2
+- wla-Remove-the-10-azure-unmanaged-sriov.rules-to-avoid-c.patch [RHEL-114155]
+- Resolves: RHEL-114155
+  ([Azure][WALA][RHEL-10] Remove 10-azure-unmanaged-sriov.rules)
+
+* Thu Oct 30 2025 Yuxin Sun <yuxisun@redhat.com> - 2.14.0.1-1
+- Rebase to 2.14.0.1 [RHEL-116438]
+- Resolves: RHEL-116438
+  (Rebase to v2.14.0.1)
 
 * Thu Aug 21 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.13.1.1-2
 - wla-Use-systemctl-instead-of-service-to-manager-services.patch [RHEL-109465]

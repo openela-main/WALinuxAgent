@@ -1,7 +1,7 @@
-From 079c5ced40fe1a9153af56d86a2094060ee9aa3e Mon Sep 17 00:00:00 2001
+From 5d45586cc51454e18ee8c54dc8331a3a54b18383 Mon Sep 17 00:00:00 2001
 From: Li Tian <94442129+litian1992@users.noreply.github.com>
 Date: Tue, 5 Aug 2025 03:18:10 +0800
-Subject: [PATCH 2/2] docs: add waagent manpage (#3401)
+Subject: [PATCH] docs: add waagent manpage (#3401)
 
 RH-Author: Li Tian <None>
 RH-MergeRequest: 21: redhat: docs: add waagent manpage (RHEL-10) (#3401)
@@ -19,11 +19,14 @@ Signed-off-by: Li Tian <litian@redhat.com>
 Co-authored-by: maddieford <93676569+maddieford@users.noreply.github.com>
 (cherry picked from commit 7f9b5568b6572745b7d0776de0ff6fb70a28dba0)
 Signed-off-by: Li Tian <litian@redhat.com>
+
+Patch-name: wla-docs-add-waagent-manpage-3401.patch
+Patch-id:
+Patch-present-in-specfile: True
 ---
- .distro/WALinuxAgent.spec |   1 +
- doc/man/waagent.1         | 117 ++++++++++++++++++++++++++++++++++++++
- setup.py                  |  14 +++++
- 3 files changed, 132 insertions(+)
+ doc/man/waagent.1 | 117 ++++++++++++++++++++++++++++++++++++++++++++++
+ setup.py          |  14 ++++++
+ 2 files changed, 131 insertions(+)
  create mode 100644 doc/man/waagent.1
 
 diff --git a/doc/man/waagent.1 b/doc/man/waagent.1
@@ -150,7 +153,7 @@ index 00000000..b1d8e9eb
 +.SH AUTHORS
 +Microsoft Azure Linux Team
 diff --git a/setup.py b/setup.py
-index cf6e90b5..9ed135fb 100755
+index 6471dba3..30784ca6 100755
 --- a/setup.py
 +++ b/setup.py
 @@ -17,7 +17,9 @@
@@ -193,9 +196,6 @@ index cf6e90b5..9ed135fb 100755
          set_udev_files(data_files)
          set_systemd_files(data_files, dest=systemd_dir_path)
 +        set_man_files(data_files)
-     else:
-         # Use default setting
-         set_bin_files(data_files, dest=agent_bin_path)
--- 
-2.39.3
-
+     elif name == 'chainguard':
+         set_bin_files(data_files, dest=agent_bin_path, src=["bin/py3/waagent"])
+         set_conf_files(data_files, src=["config/chainguard/waagent.conf"])

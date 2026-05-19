@@ -1,4 +1,4 @@
-From b0c1a1641973b0444045a4906d80e0b16ff755e7 Mon Sep 17 00:00:00 2001
+From eedacde55fedc03d122913004b067b785d616352 Mon Sep 17 00:00:00 2001
 From: Mohammed Gamal <mgamal@redhat.com>
 Date: Fri, 29 Jul 2022 13:07:13 +0200
 Subject: [PATCH] redhat: Use NetworkManager to set DHCP hostnames on recent

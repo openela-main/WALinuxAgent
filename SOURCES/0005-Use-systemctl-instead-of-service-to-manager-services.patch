@@ -1,8 +1,8 @@
-From 93376d3c37882f246c51843ff1b327600f074f81 Mon Sep 17 00:00:00 2001
+From cd1f4d2e6b7a73408279244bc54e82173ced73ab Mon Sep 17 00:00:00 2001
 From: Yuxin Sun <yuxisun@redhat.com>
 Date: Fri, 27 Jun 2025 01:34:20 +0800
-Subject: [PATCH 1/2] Use systemctl instead of service to manager services in
- new RHEL versions (#3403)
+Subject: [PATCH] Use systemctl instead of service to manager services in new
+ RHEL versions (#3403)
 
 RH-Author: yuxisun <None>
 RH-MergeRequest: 20: Use systemctl instead of service to manager services in new RHEL versions (#3403)
@@ -13,6 +13,10 @@ RH-Commit: [1/1] 95bb66dad7fda08c89a88ca347e55ec18f75d8e8 (yuxisun/WALinuxAgent-
 
 Signed-off-by: Yuxin Sun <yuxisun@redhat.com>
 (cherry picked from commit a6cfdfdc3e04884a08cd6dd20fa035b687943fe9)
+
+Patch-name: wla-Use-systemctl-instead-of-service-to-manager-services.patch
+Patch-id:
+Patch-present-in-specfile: True
 ---
  azurelinuxagent/common/osutil/redhat.py | 14 +++++++++++++-
  1 file changed, 13 insertions(+), 1 deletion(-)
@@ -49,6 +53,3 @@ index b85b2d42..cf2d2f78 100644
          DefaultOSUtil.publish_hostname(self, hostname)
  
      def set_dhcp_hostname(self, hostname):
--- 
-2.39.3
-

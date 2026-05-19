@@ -1,0 +1,50 @@
+From bd24da8a9ec066f354a10581eecbc8b85617adf8 Mon Sep 17 00:00:00 2001
+From: Yuxin Sun <yuxisun@redhat.com>
+Date: Fri, 31 Oct 2025 17:49:02 +0800
+Subject: [PATCH] Remove 10-azure-unmanaged-sriov.rules
+
+RH-Author: yuxisun <None>
+RH-MergeRequest: 24: Remove 10-azure-unmanaged-sriov.rules
+RH-Jira: RHEL-124218
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [1/1] 4223f72f9f68ba9182c0b05ed76209930a8071de (yuxisun/centos_src_WALinuxAgent)
+
+Signed-off-by: Yuxin Sun <yuxisun@redhat.com>
+---
+ .distro/WALinuxAgent.spec             | 2 +-
+ .distro/sources/module-setup-udev.sh  | 2 +-
+ config/10-azure-unmanaged-sriov.rules | 6 ------
+ setup.py                              | 3 +--
+ 4 files changed, 3 insertions(+), 10 deletions(-)
+ delete mode 100644 config/10-azure-unmanaged-sriov.rules
+
+diff --git a/config/10-azure-unmanaged-sriov.rules b/config/10-azure-unmanaged-sriov.rules
+deleted file mode 100644
+index 7eefcb26..00000000
+--- a/config/10-azure-unmanaged-sriov.rules
++++ /dev/null
+@@ -1,6 +0,0 @@
+-# Azure VMs with accelerated networking may have MANA, mlx4, or mlx5 SR-IOV devices which are transparently bonded to a synthetic
+-# hv_netvsc device.  Mark devices with the IFF_SLAVE bit set as unmanaged devices:
+-#   AZURE_UNMANAGED_SRIOV=1 for 10-azure-unmanaged-sriov.network
+-#   ID_NET_MANAGED_BY=unmanaged for systemd-networkd >= 255
+-#   NM_UNMANAGED=1 for NetworkManager
+-SUBSYSTEM=="net", ACTION!="remove", DRIVERS=="mana|mlx4_core|mlx5_core", ATTR{flags}=="0x?[89ABCDEF]??", ENV{AZURE_UNMANAGED_SRIOV}="1", ENV{ID_NET_MANAGED_BY}="unmanaged", ENV{NM_UNMANAGED}="1"
+diff --git a/setup.py b/setup.py
+index 30784ca6..c8e77988 100755
+--- a/setup.py
++++ b/setup.py
+@@ -84,8 +84,7 @@ def set_openbsd_rc_files(data_files, dest="/etc/rc.d/", src=None):
+ 
+ def set_udev_files(data_files, dest="/etc/udev/rules.d/", src=None):
+     if src is None:
+-        src = ["config/10-azure-unmanaged-sriov.rules",
+-               "config/66-azure-storage.rules",
++        src = ["config/66-azure-storage.rules",
+                "config/99-azure-product-uuid.rules"]
+     data_files.append((dest, src))
+ 
+-- 
+2.47.3
+

@@ -1,4 +1,4 @@
-From 846d9f18e2ee331e35a7243f73de3bb3c18875df Mon Sep 17 00:00:00 2001
+From f08fe8708565901e1cfe453d5847095aaefb9355 Mon Sep 17 00:00:00 2001
 From: Yuxin Sun <yuxisun@redhat.com>
 Date: Fri, 27 Jun 2025 01:34:20 +0800
 Subject: [PATCH] Use systemctl instead of service to manager services in new
@@ -19,6 +19,10 @@ Upstream PR: https://github.com/Azure/WALinuxAgent/pull/3403
 
 (cherry picked from commit a6cfdfdc3e04884a08cd6dd20fa035b687943fe9)
 Signed-off-by: Yuxin Sun <yuxisun@redhat.com>
+
+Patch-name: wla-Use-systemctl-instead-of-service-to-manager-services.patch
+Patch-id:
+Patch-present-in-specfile: True
 ---
  azurelinuxagent/common/osutil/redhat.py | 14 +++++++++++++-
  1 file changed, 13 insertions(+), 1 deletion(-)
@@ -55,6 +59,3 @@ index b85b2d42..cf2d2f78 100644
          DefaultOSUtil.publish_hostname(self, hostname)
  
      def set_dhcp_hostname(self, hostname):
--- 
-2.50.1
-

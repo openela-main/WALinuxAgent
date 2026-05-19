@@ -3,8 +3,8 @@
 %global dracut_modname_cvm 97walinuxagentcvm
 
 Name:                 WALinuxAgent
-Version:              2.13.1.1
-Release:              3%{?dist}.2.openela.0
+Version:              2.14.0.1
+Release:              4%{?dist}.openela.0
 Summary:              The Microsoft Azure Linux Agent
 
 License:              ASL 2.0
@@ -14,22 +14,24 @@ Source1:              module-setup-udev.sh
 Source2:              module-setup-cvm.sh
 Source3:              90-tpm2-import.rules
 Source4:              tpm2-luks-import.sh
+Patch1:               0001-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.patch
+Patch2:               0002-Disable-automatic-log-collector.patch
+Patch3:               0003-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch
+Patch4:               0004-docs-add-waagent-manpage-3401.patch
+Patch5:               0005-Use-systemctl-instead-of-service-to-manager-services.patch
+# For RHEL-124218 - [Azure][WALA][RHEL-9] Remove 10-azure-unmanaged-sriov.rules
+Patch6:               wla-Remove-10-azure-unmanaged-sriov.rules.patch
+# For RHEL-133507 - Backport ConditionVirtualization=|microsoft for waagent in RHEL 9.x
+Patch7:               wla-Jira-https-issues.redhat.com-browse-RHEL-133507.patch
+# For RHEL-82232 - [Azure][image mode][WALA][RHEL-9] Unable to setup the persistent firewall rules
+Patch8:               wla-Change-redhat-waagent-network-setup.service-path-to-.patch
+Patch9:               9999-add-openela-temporarily.patch
 
 # For bz#2114830 - [Azure][WALA][RHEL-9.1] Provisioning failed if no ifcfg-eth0
-Patch0001:            wla-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.patch
 # For RHEL-7273 - [Azure][WALA] Consider to disable Log collector
-Patch0002:            wla-Disable-automatic-log-collector.patch
 # For RHEL-5880 - [Azure][RHEL-9]68-azure-sriov-nm-unmanaged.rules cannot stop NetworkManager-wait-online.service checking SRIOV interface
-Patch0003:            wla-redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs-.patch
 # For RHEL-109496 - [Azure][WALA][RHEL-9] Missing man page
-Patch4:               wla-docs-add-waagent-manpage-3401.patch
 # For RHEL-97572 - [Azure][RHEL-9][WALA][Image mode] Cannot find 'service' command
-Patch5:               wla-Use-systemctl-instead-of-service-to-manager-services.patch
-# For RHEL-124949 - Update walagent to 2.14 to support FIPS 140-3 on Azure [rhel-9.7.z]
-Patch6:               wla-Support-for-FIPS-140-3-3324.patch
-# For RHEL-134939 - Backport ConditionVirtualization=|microsoft for waagent in RHEL 9.x [rhel-9.7.z]
-Patch7:               wla-Jira-https-issues.redhat.com-browse-RHEL-134939.patch
-Patch8:               9999-add-openela-temporarily.patch
 
 BuildArch:            noarch
 
@@ -46,6 +48,7 @@ Requires:             openssl
 Requires:             parted
 Requires:             python3-pyasn1
 Requires:             iptables
+Requires:             azure-vm-utils >= 0.7.0-1
 
 BuildRequires:        systemd
 Requires(post):  systemd
@@ -147,7 +150,6 @@ rm -rf %{_unitdir}/waagent.service.d/
 %{python3_sitelib}/*.egg-info
 
 %files udev
-%{_udevrulesdir}/10-azure-unmanaged-sriov.rules
 %{_udevrulesdir}/66-azure-storage.rules
 %{_udevrulesdir}/99-azure-product-uuid.rules
 %dir %{_prefix}/lib/dracut/modules.d/%{dracut_modname_udev}
@@ -165,18 +167,28 @@ rm -rf %{_unitdir}/waagent.service.d/
 %endif
 
 %changelog
-* Tue Feb 17 2026 Release Engineering <releng@openela.org> - 2.13.1.1.openela.0
+* Tue May 19 2026 Release Engineering <releng@openela.org> - 2.14.0.1.openela.0
 - Backport OpenELA temporarily
 
-* Tue Jan 06 2026 Jon Maloy <jmaloy@redhat.com> - 2.13.1.1-3.el9_7.2
-- wla-Jira-https-issues.redhat.com-browse-RHEL-134939.patch [RHEL-134939]
-- Resolves: RHEL-134939
-  (Backport ConditionVirtualization=|microsoft for waagent in RHEL 9.x [rhel-9.7.z])
+* Wed Jan 21 2026 Miroslav Rezanina <mrezanin@redhat.com> - 2.14.0.1-4
+- wla-Change-redhat-waagent-network-setup.service-path-to-.patch [RHEL-82232]
+- Resolves: RHEL-82232
+  ([Azure][image mode][WALA][RHEL-9] Unable to setup the persistent firewall rules)
 
-* Tue Dec 02 2025 Jon Maloy <jmaloy@redhat.com> - 2.13.1.1-3.el9_7.1
-- wla-Support-for-FIPS-140-3-3324.patch [RHEL-124949]
-- Resolves: RHEL-124949
-  (Update walagent to 2.14 to support FIPS 140-3 on Azure [rhel-9.7.z])
+* Tue Jan 06 2026 Jon Maloy <jmaloy@redhat.com> - 2.14.0.1-3
+- wla-Jira-https-issues.redhat.com-browse-RHEL-133507.patch [RHEL-133507]
+- Resolves: RHEL-133507
+  (Backport ConditionVirtualization=|microsoft for waagent in RHEL 9.x)
+
+* Wed Nov 12 2025 Miroslav Rezanina <mrezanin@redhat.com> - 2.14.0.1-2
+- wla-Remove-10-azure-unmanaged-sriov.rules.patch [RHEL-124218]
+- Resolves: RHEL-124218
+  ([Azure][WALA][RHEL-9] Remove 10-azure-unmanaged-sriov.rules)
+
+* Thu Oct 30 2025 Yuxin Sun <yuxisun@redhat.com> - 2.14.0.1-1
+- Rebase to 2.14.0.1 [RHEL-116436]
+- Resolves: RHEL-116436
+  (Rebase to v2.14.0.1)
 
 * Thu Aug 21 2025 Jon Maloy <jmaloy@redhat.com> - 2.13.1.1-3
 - wla-Use-systemctl-instead-of-service-to-manager-services.patch [RHEL-97572]

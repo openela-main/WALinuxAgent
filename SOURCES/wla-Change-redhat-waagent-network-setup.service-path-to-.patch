@@ -1,0 +1,153 @@
+From d316428f569ddc35561c86e29e1d4b14423b239d Mon Sep 17 00:00:00 2001
+From: Yuxin Sun <yuxisun@redhat.com>
+Date: Fri, 8 Aug 2025 04:11:48 +0800
+Subject: [PATCH] Change redhat waagent-network-setup.service path to /etc
+ (#3392)
+
+RH-Author: yuxisun <None>
+RH-MergeRequest: 27: [c9s]Change redhat waagent-network-setup.service path to /etc (#3392)
+RH-Jira: RHEL-82232
+RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
+RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
+RH-Commit: [1/1] a975e122bba51e666a762c4967fa4db559b7e027 (yuxisun/centos_src_WALinuxAgent)
+
+JIRA: https://issues.redhat.com/browse/RHEL-82232
+
+In image mode, the /usr path is readonly. WALA intends to write a /usr/lib/systemd/system/waagent-network-setup.service file to setup the persistent firewall rules, which is not permitted in image mode. So we change the service file path to /etc/systemd/system/waagent-network-setup.service to resolve this issue.
+
+Upstream PR: https://github.com/Azure/WALinuxAgent/pull/3392
+
+Signed-off-by: Yuxin Sun <yuxisun@redhat.com>
+Co-authored-by: Norberto Arrieta <narrieta@users.noreply.github.com>
+Co-authored-by: maddieford <93676569+maddieford@users.noreply.github.com>
+(cherry picked from commit 1d8e1c915b9551d8cd0587f32a80e66fe153c9da)
+Signed-off-by: Yuxin Sun <yuxisun@redhat.com>
+---
+ azurelinuxagent/common/osutil/default.py     |  4 ++++
+ azurelinuxagent/common/osutil/redhat.py      | 12 +++++++++++
+ azurelinuxagent/ga/persist_firewall_rules.py | 22 ++++++++++++++++----
+ tests/ga/test_persist_firewall_rules.py      |  2 +-
+ 4 files changed, 35 insertions(+), 5 deletions(-)
+
+diff --git a/azurelinuxagent/common/osutil/default.py b/azurelinuxagent/common/osutil/default.py
+index 9eeb0da8..a8830ff3 100644
+--- a/azurelinuxagent/common/osutil/default.py
++++ b/azurelinuxagent/common/osutil/default.py
+@@ -123,6 +123,10 @@ class DefaultOSUtil(object):
+     def get_systemd_unit_file_install_path():
+         return "/lib/systemd/system"
+ 
++    @classmethod
++    def get_network_setup_service_install_path(cls):
++        return cls.get_systemd_unit_file_install_path()
++
+     @staticmethod
+     def get_agent_bin_path():
+         return "/usr/sbin"
+diff --git a/azurelinuxagent/common/osutil/redhat.py b/azurelinuxagent/common/osutil/redhat.py
+index cf2d2f78..a80fc889 100644
+--- a/azurelinuxagent/common/osutil/redhat.py
++++ b/azurelinuxagent/common/osutil/redhat.py
+@@ -103,6 +103,18 @@ class RedhatOSUtil(Redhat6xOSUtil):
+     def get_systemd_unit_file_install_path():
+         return "/usr/lib/systemd/system"
+ 
++    @classmethod
++    def get_network_setup_service_install_path(cls):
++        """
++        In image mode, /usr is readonly, so the
++        waagent-network-setup.service is written in /etc/systemd/system.
++        In non-image mode, the default location is /usr/lib/systemd/system.
++        """
++        if os.path.exists('/run/ostree-booted'):
++            return "/etc/systemd/system"
++        else:
++            return cls.get_systemd_unit_file_install_path()
++
+     def set_hostname(self, hostname):
+         """
+         Unlike redhat 6.x, redhat 7.x will set hostname via hostnamectl
+diff --git a/azurelinuxagent/ga/persist_firewall_rules.py b/azurelinuxagent/ga/persist_firewall_rules.py
+index 1f80d272..a876de2c 100644
+--- a/azurelinuxagent/ga/persist_firewall_rules.py
++++ b/azurelinuxagent/ga/persist_firewall_rules.py
+@@ -27,6 +27,7 @@ from azurelinuxagent.common.future import ustr
+ from azurelinuxagent.common.osutil import get_osutil, systemd
+ from azurelinuxagent.common.utils import shellutil, fileutil, textutil
+ from azurelinuxagent.common.utils.shellutil import CommandError
++from azurelinuxagent.common.version import get_distro
+ 
+ 
+ class PersistFirewallRulesHandler(object):
+@@ -71,23 +72,25 @@ if __name__ == '__main__':
+     # modify the unit file on VM too
+     _UNIT_VERSION = "1.4"
+ 
++    _DISTRO = get_distro()[0]
++
+     @staticmethod
+     def get_service_file_path():
+         osutil = get_osutil()
+         service_name = PersistFirewallRulesHandler._AGENT_NETWORK_SETUP_NAME_FORMAT.format(osutil.get_service_name())
+-        return os.path.join(osutil.get_systemd_unit_file_install_path(), service_name)
++        return os.path.join(osutil.get_network_setup_service_install_path(), service_name)
+ 
+     def __init__(self, dst_ip):
+         """
+         This class deals with ensuring that Firewall rules are persisted over system reboots.
+         It tries to employ using Firewalld.service if present first as it already has provisions for persistent rules.
+-        If not, it then creates a new agent-network-setup.service file and copy it over to the osutil.get_systemd_unit_file_install_path() dynamically
++        If not, it then creates a new agent-network-setup.service file and copy it over to the osutil.get_network_setup_service_install_path() dynamically
+         On top of it, on every service restart it ensures that the WireIP is overwritten and the new IP is blocked as well.
+         """
+         osutil = get_osutil()
+         self._network_setup_service_name = self._AGENT_NETWORK_SETUP_NAME_FORMAT.format(osutil.get_service_name())
+         self._is_systemd = systemd.is_systemd()
+-        self._systemd_file_path = osutil.get_systemd_unit_file_install_path()
++        self._systemd_file_path = osutil.get_network_setup_service_install_path()
+         self._dst_ip = dst_ip
+         # The custom service will try to call the current agent executable to setup the firewall rules
+         self._current_agent_executable_path = os.path.join(os.getcwd(), sys.argv[0])
+@@ -118,7 +121,7 @@ if __name__ == '__main__':
+     def setup(self):
+ 
+         if not self._is_firewall_service_running():
+-            logger.info("Firewalld service not running/unavailable, trying to set up {0}".format(self._network_setup_service_name))
++            logger.info("Firewalld service not running/unavailable, trying to set up {0}".format(self.get_service_file_path()))
+             if systemd.is_systemd():
+                 self._setup_network_setup_service()
+             else:
+@@ -176,6 +179,17 @@ if __name__ == '__main__':
+         # This is to handle the case where WireIP can change midway on service restarts.
+         # Additionally, incase of auto-update this would also update the location of the new EGG file ensuring that
+         # the service is always run from the most latest agent.
++
++        # If RHEL and in image mode, we need to clean up the service file in old path
++        if self._DISTRO == 'rhel' and os.path.exists('/run/ostree-booted'):
++            old_service_file_path = os.path.join('/usr/lib/systemd/system/', self._network_setup_service_name)
++            if os.path.exists(old_service_file_path):
++                logger.info("Cleaning up old service file in image mode: {0}".format(old_service_file_path))
++                try:
++                    fileutil.rm_files(old_service_file_path)
++                except Exception as error:
++                    logger.warn("Unable to delete old service in image mode {0}: {1}".format(self._network_setup_service_name, ustr(error)))
++
+         self.__setup_binary_file()
+ 
+         network_service_enabled = self.__verify_network_setup_service_enabled()
+diff --git a/tests/ga/test_persist_firewall_rules.py b/tests/ga/test_persist_firewall_rules.py
+index 18b302f8..1f3f7e56 100644
+--- a/tests/ga/test_persist_firewall_rules.py
++++ b/tests/ga/test_persist_firewall_rules.py
+@@ -76,7 +76,7 @@ class TestPersistFirewallRulesHandler(AgentTestCase):
+ 
+         osutil = DefaultOSUtil()
+         osutil.get_agent_bin_path = MagicMock(return_value=self.__agent_bin_dir)
+-        osutil.get_systemd_unit_file_install_path = MagicMock(return_value=self.__systemd_dir)
++        osutil.get_network_setup_service_install_path = MagicMock(return_value=self.__systemd_dir)
+ 
+         self._expected_service_name = PersistFirewallRulesHandler._AGENT_NETWORK_SETUP_NAME_FORMAT.format(
+             osutil.get_service_name())
+-- 
+2.47.3
+

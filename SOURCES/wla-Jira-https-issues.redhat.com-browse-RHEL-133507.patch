@@ -1,14 +1,14 @@
-From cbf30e0eebbedc5242d03f53d355113a53209635 Mon Sep 17 00:00:00 2001
+From 950482d0e2147546dbb00d064937e6375bf860d4 Mon Sep 17 00:00:00 2001
 From: Chris Patterson <cpatterson@microsoft.com>
 Date: Thu, 1 Sep 2022 10:45:47 -0400
-Subject: [PATCH] Jira: https://issues.redhat.com/browse/RHEL-134939
+Subject: [PATCH] Jira: https://issues.redhat.com/browse/RHEL-133507
 
 RH-Author: yuxisun <None>
 RH-MergeRequest: 25: waagent.service: set ConditionVirtualization=|microsoft
-RH-Jira: RHEL-134939
+RH-Jira: RHEL-133507
 RH-Acked-by: Vitaly Kuznetsov <vkuznets@redhat.com>
 RH-Acked-by: Miroslav Rezanina <mrezanin@redhat.com>
-RH-Commit: [1/1] 95d939cb838949a4509bd9415873fbdc7e7191f3
+RH-Commit: [1/1] 667b85d61146b144ba24baf41156ae32e301b194 (yuxisun/centos_src_WALinuxAgent)
 
 waagent.service: set ConditionVirtualization=|microsoft
 
@@ -18,7 +18,7 @@ Set it as a triggering condition to make it easier for downstreams or
 test setups to add another condition (i.e. run outside of hyperv).
 
 Signed-off-by: Chris Patterson <cpatterson@microsoft.com>
-(cherry picked from commit 2d78c9ebaba4742390e92dc5994391949b90ec4c)
+(cherry picked from commit d1fad5317e2dac9fc82d9c56d2d016e20db5f7a2)
 
 Downstream only
 

@@ -1,7 +1,7 @@
 Summary:              Microsoft Azure Linux Agent
 Name:                 WALinuxAgent
 Version:              2.7.0.6
-Release:              8%{?dist}.openela.0.1
+Release:              9%{?dist}.openela.0.1
 
 License:              ASL 2.0
 Group:                Development/Libraries
@@ -19,7 +19,8 @@ Patch4:               wla-redhat-Use-NetworkManager-to-set-DHCP-hostnames-on-r.p
 Patch5:               wla-Update-Log-Collector-default-in-Comments-and-Readme-.patch
 # For bz#2170104 - [Azure][WALA][RHEL-8] systemd service should not use python3
 Patch6:               wla-Use-platform-python-in-waagent.service.patch
-Patch7:               9999-add-openela-temporarily.patch
+Patch7:               redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs.patch
+Patch8:               9999-add-openela-temporarily.patch
 
 # rhel requirements
 BuildRequires:        python3-devel
@@ -59,6 +60,7 @@ Udev rules specific to Microsoft Azure Virtual Machines.
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
+%patch8 -p1
 
 %build
 %py3_build
@@ -98,8 +100,12 @@ rm -rf %{_unitdir}/waagent.service.d/
 %{_udevrulesdir}/*.rules
 
 %changelog
-* Tue Mar 05 2024 Release Engineering <releng@openela.org> - 2.7.0.6.openela.0.1
+* Mon Nov 23 2026 Release Engineering <releng@openela.org> - 2.7.0.6.openela.0.1
 - Backport OpenELA temporarily
+
+* Mon Sep 21 2026 Evgenii Kolesnikov <ekolesni@redhat.com> - 2.7.0.6-9.el8_10
+- redhat-Add-a-udev-rule-to-avoid-managing-slave-NICs.patch
+- Resolves: RHEL-250799 (Re-instantiate UDEV blacklist rule for 'mana' driver in WALinuxAgent)
 
 * Mon Mar 06 2023 Jon Maloy <jmaloy@redhat.com> - 2.7.0.6-8.el8_8
 - wla-redhat-Fix-frh.py-to-not-skip-valid-patches-to-init-.patch [bz#2170104]
